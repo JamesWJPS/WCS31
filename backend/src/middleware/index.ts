@@ -1,2 +1,1 @@
-// Express middleware will be defined here
-export {};
+export * from './auth';

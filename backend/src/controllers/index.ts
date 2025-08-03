@@ -1,2 +1,1 @@
-// API controllers will be defined here
-export {};
+export * from './AuthController';

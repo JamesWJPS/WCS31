@@ -1,2 +1,1 @@
-// API routes will be defined here
-export {};
+export { default as authRoutes } from './auth';
