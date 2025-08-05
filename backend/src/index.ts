@@ -2,7 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import dotenv from 'dotenv';
-import { authRoutes } from './routes';
+import { authRoutes, userRoutes } from './routes';
 import { initializeDatabase } from './utils/database';
 
 // Load environment variables
@@ -21,6 +21,7 @@ app.use(express.urlencoded({ extended: true }));
 
 // API routes
 app.use('/api/auth', authRoutes);
+app.use('/api/users', userRoutes);
 
 // Health check endpoint
 app.get('/health', (_req, res) => {

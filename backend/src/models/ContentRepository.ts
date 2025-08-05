@@ -1,6 +1,31 @@
 import { BaseRepository } from './BaseRepository';
 import { Content, ContentTable } from './interfaces';
 
+export interface ContentSearchOptions {
+  query?: string;
+  status?: 'draft' | 'published' | 'archived';
+  authorId?: string;
+  templateId?: string;
+  tags?: string[];
+  dateFrom?: Date;
+  dateTo?: Date;
+  limit?: number;
+  offset?: number;
+  sortBy?: 'title' | 'createdAt' | 'updatedAt' | 'publishedAt';
+  sortOrder?: 'asc' | 'desc';
+}
+
+export interface ContentVersion {
+  id: string;
+  contentId: string;
+  version: number;
+  title: string;
+  body: string;
+  metadata: Record<string, any>;
+  createdAt: Date;
+  createdBy: string;
+}
+
 export class ContentRepository extends BaseRepository<Content, ContentTable> {
   constructor() {
     super('content');
@@ -26,6 +51,74 @@ export class ContentRepository extends BaseRepository<Content, ContentTable> {
     return results.map(result => this.mapFromTable(result));
   }
 
+  async search(options: ContentSearchOptions): Promise<{ content: Content[]; total: number }> {
+    let query = this.db(this.tableName);
+
+    // Text search in title and body
+    if (options.query) {
+      query = query.where(function() {
+        this.where('title', 'like', `%${options.query}%`)
+            .orWhere('body', 'like', `%${options.query}%`);
+      });
+    }
+
+    // Filter by status
+    if (options.status) {
+      query = query.where('status', options.status);
+    }
+
+    // Filter by author
+    if (options.authorId) {
+      query = query.where('author_id', options.authorId);
+    }
+
+    // Filter by template
+    if (options.templateId) {
+      query = query.where('template_id', options.templateId);
+    }
+
+    // Filter by tags (search in metadata JSON)
+    if (options.tags && options.tags.length > 0) {
+      query = query.where(function() {
+        options.tags!.forEach(tag => {
+          this.orWhere('metadata', 'like', `%"${tag}"%`);
+        });
+      });
+    }
+
+    // Date range filtering
+    if (options.dateFrom) {
+      query = query.where('created_at', '>=', options.dateFrom);
+    }
+    if (options.dateTo) {
+      query = query.where('created_at', '<=', options.dateTo);
+    }
+
+    // Get total count for pagination
+    const totalQuery = query.clone();
+    const totalResult = await totalQuery.count('* as count').first();
+    const total = totalResult ? Number(totalResult['count']) : 0;
+
+    // Apply sorting
+    const sortBy = options.sortBy || 'createdAt';
+    const sortOrder = options.sortOrder || 'desc';
+    const sortColumn = this.getSortColumn(sortBy);
+    query = query.orderBy(sortColumn, sortOrder);
+
+    // Apply pagination
+    if (options.limit) {
+      query = query.limit(options.limit);
+    }
+    if (options.offset) {
+      query = query.offset(options.offset);
+    }
+
+    const results = await query;
+    const content = results.map(result => this.mapFromTable(result));
+
+    return { content, total };
+  }
+
   async publish(id: string): Promise<Content | null> {
     const now = new Date();
     await this.db(this.tableName).where({ id }).update({
@@ -34,6 +127,115 @@ export class ContentRepository extends BaseRepository<Content, ContentTable> {
       updated_at: now,
     });
     return this.findById(id);
+  }
+
+  async archive(id: string): Promise<Content | null> {
+    const now = new Date();
+    await this.db(this.tableName).where({ id }).update({
+      status: 'archived',
+      updated_at: now,
+    });
+    return this.findById(id);
+  }
+
+  async unpublish(id: string): Promise<Content | null> {
+    const now = new Date();
+    await this.db(this.tableName).where({ id }).update({
+      status: 'draft',
+      published_at: null,
+      updated_at: now,
+    });
+    return this.findById(id);
+  }
+
+  async createVersion(contentId: string, createdBy: string): Promise<ContentVersion | null> {
+    const content = await this.findById(contentId);
+    if (!content) {
+      return null;
+    }
+
+    // Get the next version number
+    const lastVersion = await this.db('content_versions')
+      .where({ content_id: contentId })
+      .orderBy('version', 'desc')
+      .first();
+    
+    const nextVersion = lastVersion ? lastVersion.version + 1 : 1;
+
+    const versionData = {
+      id: `${contentId}-v${nextVersion}`,
+      content_id: contentId,
+      version: nextVersion,
+      title: content.title,
+      body: content.body,
+      metadata: JSON.stringify(content.metadata),
+      created_at: new Date(),
+      created_by: createdBy,
+    };
+
+    await this.db('content_versions').insert(versionData);
+
+    return {
+      id: versionData.id,
+      contentId: versionData.content_id,
+      version: versionData.version,
+      title: versionData.title,
+      body: versionData.body,
+      metadata: JSON.parse(versionData.metadata),
+      createdAt: versionData.created_at,
+      createdBy: versionData.created_by,
+    };
+  }
+
+  async getVersions(contentId: string): Promise<ContentVersion[]> {
+    const results = await this.db('content_versions')
+      .where({ content_id: contentId })
+      .orderBy('version', 'desc');
+
+    return results.map(result => ({
+      id: result.id,
+      contentId: result.content_id,
+      version: result.version,
+      title: result.title,
+      body: result.body,
+      metadata: JSON.parse(result.metadata),
+      createdAt: new Date(result.created_at),
+      createdBy: result.created_by,
+    }));
+  }
+
+  async restoreVersion(contentId: string, version: number, updatedBy: string): Promise<Content | null> {
+    const versionData = await this.db('content_versions')
+      .where({ content_id: contentId, version })
+      .first();
+
+    if (!versionData) {
+      return null;
+    }
+
+    // Create a new version before restoring
+    await this.createVersion(contentId, updatedBy);
+
+    // Update the content with the version data
+    const now = new Date();
+    await this.db(this.tableName).where({ id: contentId }).update({
+      title: versionData.title,
+      body: versionData.body,
+      metadata: versionData.metadata,
+      updated_at: now,
+    });
+
+    return this.findById(contentId);
+  }
+
+  private getSortColumn(sortBy: string): string {
+    const columnMap: Record<string, string> = {
+      title: 'title',
+      createdAt: 'created_at',
+      updatedAt: 'updated_at',
+      publishedAt: 'published_at',
+    };
+    return columnMap[sortBy] || 'created_at';
   }
 
   protected mapFromTable(tableRow: ContentTable): Content {

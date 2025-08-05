@@ -147,3 +147,14 @@ export interface TemplateTable {
   created_at: Date;
   updated_at: Date;
 }
+
+export interface ContentVersionTable {
+  id: string;
+  content_id: string;
+  version: number;
+  title: string;
+  body: string;
+  metadata: string; // JSON string
+  created_at: Date;
+  created_by: string;
+}
