@@ -20,18 +20,22 @@ export class TemplateService {
    * Creates a new template with validation
    */
   async createTemplate(templateData: Omit<Template, 'id' | 'createdAt' | 'updatedAt'>): Promise<Template> {
-    const template: Template = {
+    // Validate template data structure first (without timestamps)
+    const templateForValidation = {
       ...templateData,
       id: uuidv4(),
-      createdAt: new Date(),
-      updatedAt: new Date(),
     };
-
-    // Validate template data structure
-    const { error } = templateCreateSchema.validate(template);
+    
+    const { error } = templateCreateSchema.validate(templateForValidation);
     if (error) {
       throw new Error(`Template validation failed: ${error.details.map(d => d.message).join(', ')}`);
     }
+
+    const template: Template = {
+      ...templateForValidation,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
 
     // Validate WCAG 2.2 compliance
     const accessibilityResult = validateTemplate(template);
@@ -44,7 +48,7 @@ export class TemplateService {
       console.warn('Template warnings:', accessibilityResult.warnings);
     }
 
-    return await this.templateRepository.create(template);
+    return await this.templateRepository.createTemplate(template);
   }
 
   /**
@@ -74,7 +78,7 @@ export class TemplateService {
       throw new Error(`Template accessibility validation failed: ${accessibilityResult.errors.join(', ')}`);
     }
 
-    return await this.templateRepository.update(id, updatedTemplate);
+    return await this.templateRepository.updateTemplate(id, updatedTemplate);
   }
 
   /**
@@ -206,7 +210,7 @@ export class TemplateService {
           if (typeof value !== 'object' || !value.src) {
             errors.push(`Image field "${field.name}" must have a src property`);
           }
-          if (field.validation?.altTextRequired && !value.alt) {
+          if (field.validation?.['altTextRequired'] && !value.alt) {
             errors.push(`Image field "${field.name}" requires alt text`);
           }
           break;
@@ -235,20 +239,20 @@ export class TemplateService {
   private applyCustomValidation(field: TemplateField, value: any, errors: string[]): void {
     const validation = field.validation;
 
-    if (validation.minLength && typeof value === 'string' && value.length < validation.minLength) {
-      errors.push(`Field "${field.name}" must be at least ${validation.minLength} characters long`);
+    if (validation['minLength'] && typeof value === 'string' && value.length < validation['minLength']) {
+      errors.push(`Field "${field.name}" must be at least ${validation['minLength']} characters long`);
     }
 
-    if (validation.maxLength && typeof value === 'string' && value.length > validation.maxLength) {
-      errors.push(`Field "${field.name}" must be no more than ${validation.maxLength} characters long`);
+    if (validation['maxLength'] && typeof value === 'string' && value.length > validation['maxLength']) {
+      errors.push(`Field "${field.name}" must be no more than ${validation['maxLength']} characters long`);
     }
 
-    if (validation.pattern && typeof value === 'string' && !new RegExp(validation.pattern).test(value)) {
+    if (validation['pattern'] && typeof value === 'string' && !new RegExp(validation['pattern']).test(value)) {
       errors.push(`Field "${field.name}" does not match the required pattern`);
     }
 
-    if (validation.allowedValues && !validation.allowedValues.includes(value)) {
-      errors.push(`Field "${field.name}" must be one of: ${validation.allowedValues.join(', ')}`);
+    if (validation['allowedValues'] && !validation['allowedValues'].includes(value)) {
+      errors.push(`Field "${field.name}" must be one of: ${validation['allowedValues'].join(', ')}`);
     }
   }
 
@@ -268,6 +272,9 @@ export class TemplateService {
           <title>Council Page</title>
         </head>
         <body>
+          <div class="skip-links">
+            <a href="#main-content" class="skip-link">Skip to main content</a>
+          </div>
           <header role="banner">
             <h1 data-field="page-title">Page Title</h1>
             <nav role="navigation">

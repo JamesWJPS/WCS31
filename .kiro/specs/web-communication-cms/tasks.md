@@ -87,7 +87,14 @@
   - Commit to GIT
   - _Requirements: 2.2, 2.3, 5.3_
 
-- [ ] 7. Implement template system foundation
+- [-] 7. Implement template system foundation
+
+
+
+
+
+
+
 
 
 

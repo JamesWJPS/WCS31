@@ -62,7 +62,7 @@ export function validateTemplateAccessibility(template: Template): Accessibility
     validateSemanticStructure(document, wcagViolations);
 
   } catch (error) {
-    errors.push(`Failed to parse HTML structure: ${error.message}`);
+    errors.push(`Failed to parse HTML structure: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
 
   return {
@@ -197,14 +197,6 @@ function validateKeyboardAccessibility(document: Document, violations: WcagViola
  * Validates color contrast in CSS (basic check for common patterns)
  */
 function validateColorContrast(cssStyles: string, violations: WcagViolation[]): void {
-  // Basic regex patterns for color values
-  const colorPatterns = [
-    /color:\s*#([0-9a-fA-F]{3,6})/g,
-    /background-color:\s*#([0-9a-fA-F]{3,6})/g,
-    /color:\s*rgb\([^)]+\)/g,
-    /background-color:\s*rgb\([^)]+\)/g,
-  ];
-
   // This is a simplified check - in a real implementation, you'd want
   // to use a proper color contrast calculation library
   const lowContrastPatterns = [
@@ -229,8 +221,6 @@ function validateColorContrast(cssStyles: string, violations: WcagViolation[]): 
  */
 function validateSemanticStructure(document: Document, violations: WcagViolation[]): void {
   const hasMain = document.querySelector('main');
-  const hasNav = document.querySelector('nav');
-  const hasHeader = document.querySelector('header');
 
   if (!hasMain) {
     violations.push({
@@ -293,17 +283,17 @@ export function validateTemplateFields(fields: TemplateField[]): ValidationResul
     // Validate field type-specific requirements
     switch (field.type) {
       case 'image':
-        if (field.validation && !field.validation.altTextRequired) {
+        if (field.validation && !field.validation['altTextRequired']) {
           warnings.push(`Image field "${field.name}" should require alt text for accessibility`);
         }
         break;
       case 'link':
-        if (field.validation && !field.validation.titleRequired) {
+        if (field.validation && !field.validation['titleRequired']) {
           warnings.push(`Link field "${field.name}" should require title attribute for accessibility`);
         }
         break;
       case 'rich-text':
-        if (field.validation && !field.validation.headingStructure) {
+        if (field.validation && !field.validation['headingStructure']) {
           warnings.push(`Rich text field "${field.name}" should validate heading structure`);
         }
         break;

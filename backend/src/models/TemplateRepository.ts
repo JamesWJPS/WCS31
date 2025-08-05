@@ -32,6 +32,40 @@ export class TemplateRepository extends BaseRepository<Template, TemplateTable> 
     return this.findById(id);
   }
 
+  // Custom create method that accepts Template domain model
+  async createTemplate(template: Template): Promise<Template> {
+    const tableData = this.mapToTable(template);
+    const { created_at, updated_at, ...insertData } = tableData;
+    
+    const now = new Date();
+    const finalInsertData = {
+      ...insertData,
+      created_at: now,
+      updated_at: now,
+    };
+
+    await this.db(this.tableName).insert(finalInsertData);
+    const created = await this.findById(template.id);
+    if (!created) {
+      throw new Error('Failed to create template');
+    }
+    return created;
+  }
+
+  // Custom update method that accepts Template domain model
+  async updateTemplate(id: string, template: Template): Promise<Template | null> {
+    const tableData = this.mapToTable(template);
+    const { created_at, ...updateData } = tableData;
+    
+    const finalUpdateData = {
+      ...updateData,
+      updated_at: new Date(),
+    };
+
+    await this.db(this.tableName).where({ id }).update(finalUpdateData);
+    return this.findById(id);
+  }
+
   protected mapFromTable(tableRow: TemplateTable): Template {
     return {
       id: tableRow.id,

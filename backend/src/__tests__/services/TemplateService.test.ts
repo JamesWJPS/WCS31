@@ -4,7 +4,7 @@
 
 import { TemplateService } from '../../services/TemplateService';
 import { TemplateRepository } from '../../models/TemplateRepository';
-import { Template, TemplateField } from '../../models/interfaces';
+import { Template } from '../../models/interfaces';
 
 // Mock the TemplateRepository
 jest.mock('../../models/TemplateRepository');
@@ -76,11 +76,11 @@ describe('TemplateService', () => {
       delete (templateData as any).updatedAt;
 
       const expectedTemplate = createTestTemplate();
-      mockTemplateRepository.create.mockResolvedValue(expectedTemplate);
+      mockTemplateRepository.createTemplate.mockResolvedValue(expectedTemplate);
 
       const result = await templateService.createTemplate(templateData);
 
-      expect(mockTemplateRepository.create).toHaveBeenCalledWith(
+      expect(mockTemplateRepository.createTemplate).toHaveBeenCalledWith(
         expect.objectContaining({
           name: templateData.name,
           description: templateData.description,
@@ -167,12 +167,12 @@ describe('TemplateService', () => {
       const updatedTemplate = createTestTemplate({ ...updateData, updatedAt: new Date() });
 
       mockTemplateRepository.findById.mockResolvedValue(existingTemplate);
-      mockTemplateRepository.update.mockResolvedValue(updatedTemplate);
+      mockTemplateRepository.updateTemplate.mockResolvedValue(updatedTemplate);
 
       const result = await templateService.updateTemplate('test-template-id', updateData);
 
       expect(mockTemplateRepository.findById).toHaveBeenCalledWith('test-template-id');
-      expect(mockTemplateRepository.update).toHaveBeenCalledWith(
+      expect(mockTemplateRepository.updateTemplate).toHaveBeenCalledWith(
         'test-template-id',
         expect.objectContaining({
           ...existingTemplate,
@@ -549,11 +549,11 @@ describe('TemplateService', () => {
         name: 'Basic Page Template',
         description: 'A basic WCAG 2.2 compliant page template for council websites',
       });
-      mockTemplateRepository.create.mockResolvedValue(defaultTemplate);
+      mockTemplateRepository.createTemplate.mockResolvedValue(defaultTemplate);
 
       const result = await templateService.createDefaultTemplate();
 
-      expect(mockTemplateRepository.create).toHaveBeenCalledWith(
+      expect(mockTemplateRepository.createTemplate).toHaveBeenCalledWith(
         expect.objectContaining({
           name: 'Basic Page Template',
           description: 'A basic WCAG 2.2 compliant page template for council websites',

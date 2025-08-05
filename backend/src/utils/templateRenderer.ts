@@ -63,7 +63,7 @@ export class TemplateRenderer {
       };
 
     } catch (error) {
-      errors.push(`Template rendering failed: ${error.message}`);
+      errors.push(`Template rendering failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
       return { html: '', errors, warnings };
     }
   }
@@ -87,7 +87,7 @@ export class TemplateRenderer {
             if (typeof data[field.id] !== 'object' || !data[field.id].src) {
               errors.push(`Image field "${field.name}" must have a src property`);
             }
-            if (field.validation?.altTextRequired && !data[field.id].alt) {
+            if (field.validation?.['altTextRequired'] && !data[field.id].alt) {
               errors.push(`Image field "${field.name}" requires alt text`);
             }
             break;
@@ -95,7 +95,7 @@ export class TemplateRenderer {
             if (typeof data[field.id] !== 'object' || !data[field.id].href) {
               errors.push(`Link field "${field.name}" must have an href property`);
             }
-            if (field.validation?.titleRequired && !data[field.id].title) {
+            if (field.validation?.['titleRequired'] && !data[field.id].title) {
               warnings.push(`Link field "${field.name}" should have a title for accessibility`);
             }
             break;
@@ -313,7 +313,12 @@ export class TemplateRenderer {
         // Fix skipped heading levels by adjusting the heading
         const newHeading = document.createElement(`h${expectedLevel + 1}`);
         newHeading.innerHTML = heading.innerHTML;
-        newHeading.className = heading.className;
+        // Copy attributes except class if it's empty
+        Array.from(heading.attributes).forEach(attr => {
+          if (attr.name !== 'class' || attr.value.trim() !== '') {
+            newHeading.setAttribute(attr.name, attr.value);
+          }
+        });
         heading.parentNode?.replaceChild(newHeading, heading);
         expectedLevel = expectedLevel + 1;
       } else {
@@ -376,25 +381,25 @@ export class TemplateRenderer {
     title.textContent = content.title;
 
     // Add meta description if available
-    if (content.metadata?.description) {
+    if (content.metadata?.['description']) {
       let metaDescription = document.querySelector('meta[name="description"]');
       if (!metaDescription) {
         metaDescription = document.createElement('meta');
         metaDescription.setAttribute('name', 'description');
         document.head.appendChild(metaDescription);
       }
-      metaDescription.setAttribute('content', content.metadata.description);
+      metaDescription.setAttribute('content', content.metadata['description']);
     }
 
     // Add meta keywords if available
-    if (content.metadata?.keywords) {
+    if (content.metadata?.['keywords']) {
       let metaKeywords = document.querySelector('meta[name="keywords"]');
       if (!metaKeywords) {
         metaKeywords = document.createElement('meta');
         metaKeywords.setAttribute('name', 'keywords');
         document.head.appendChild(metaKeywords);
       }
-      metaKeywords.setAttribute('content', content.metadata.keywords);
+      metaKeywords.setAttribute('content', content.metadata['keywords']);
     }
   }
 
@@ -403,9 +408,6 @@ export class TemplateRenderer {
    */
   private static sanitizeHtml(html: string): string {
     // This is a basic implementation - in production, use a proper HTML sanitization library
-    const allowedTags = ['p', 'br', 'strong', 'em', 'u', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'ul', 'ol', 'li', 'a'];
-    const allowedAttributes = ['href', 'title', 'alt', 'src'];
-
     // Remove script tags and event handlers
     let sanitized = html.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '');
     sanitized = sanitized.replace(/on\w+="[^"]*"/gi, '');
