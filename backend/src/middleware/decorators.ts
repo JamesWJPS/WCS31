@@ -125,6 +125,39 @@ export const requireEditorRole = (req: Request, res: Response, next: NextFunctio
 };
 
 /**
+ * Middleware factory for requiring specific roles
+ */
+export const requireRole = (roles: User['role'][]) => {
+  return (req: Request, res: Response, next: NextFunction): void => {
+    if (!req.user) {
+      res.status(401).json({
+        success: false,
+        error: {
+          code: 'AUTHENTICATION_REQUIRED',
+          message: 'Authentication required',
+          timestamp: new Date().toISOString()
+        }
+      });
+      return;
+    }
+
+    if (!roles.includes(req.user.role)) {
+      res.status(403).json({
+        success: false,
+        error: {
+          code: 'INSUFFICIENT_ROLE',
+          message: `Insufficient role. Required: ${roles.join(' or ')}`,
+          timestamp: new Date().toISOString()
+        }
+      });
+      return;
+    }
+
+    next();
+  };
+};
+
+/**
  * Middleware factory for resource ownership validation
  */
 export const requireOwnership = (
