@@ -41,6 +41,7 @@ export interface Document {
     title?: string;
     description?: string;
     tags?: string[];
+    hash?: string;
   };
 }
 
