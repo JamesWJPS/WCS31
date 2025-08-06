@@ -1,11 +1,17 @@
-import React from 'react';
+import { AuthProvider } from './contexts/AuthContext';
+import { AppProvider } from './contexts/AppContext';
+import AppRouter from './router/AppRouter';
+import Notification from './components/ui/Notification';
+import './styles/globals.css';
 
 function App(): JSX.Element {
   return (
-    <div>
-      <h1>Web Communication CMS</h1>
-      <p>Frontend application starting...</p>
-    </div>
+    <AuthProvider>
+      <AppProvider>
+        <AppRouter />
+        <Notification />
+      </AppProvider>
+    </AuthProvider>
   );
 }
 
