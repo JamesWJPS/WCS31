@@ -249,6 +249,8 @@
 
 
 
+
+
   - Create file upload component with drag-and-drop
   - Implement folder tree navigation component
   - Build document listing with search and filtering
@@ -257,7 +259,9 @@
   - Commit to GIT
   - _Requirements: 4.1, 4.2, 4.3, 4.4, 4.5_
 
-- [ ] 17. Implement user management interface (admin only)
+- [-] 17. Implement user management interface (admin only)
+
+
   - Create user listing and search components
   - Build user creation and editing forms
   - Implement role assignment interface

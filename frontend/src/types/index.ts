@@ -154,3 +154,24 @@ export interface UploadProgress {
   status: 'pending' | 'uploading' | 'completed' | 'error';
   error?: string;
 }
+
+export interface UserFilter {
+  search?: string;
+  role?: 'administrator' | 'editor' | 'read-only';
+  isActive?: boolean;
+}
+
+export interface CreateUserData {
+  username: string;
+  email: string;
+  password: string;
+  role: 'administrator' | 'editor' | 'read-only';
+}
+
+export interface UpdateUserData {
+  username?: string;
+  email?: string;
+  password?: string;
+  role?: 'administrator' | 'editor' | 'read-only';
+  isActive?: boolean;
+}

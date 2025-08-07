@@ -1,16 +1,56 @@
 .users-page {
   max-width: 1200px;
   margin: 0 auto;
+  padding: var(--spacing-lg);
+}
+
+.users-page-header {
+  margin-bottom: var(--spacing-xl);
 }
 
 .users-page h1 {
   font-size: var(--font-size-3xl);
   font-weight: 600;
   color: var(--text-primary);
-  margin-bottom: var(--spacing-lg);
+  margin-bottom: var(--spacing-md);
 }
 
-.users-page p {
+.page-description {
   color: var(--text-secondary);
   font-size: var(--font-size-base);
+  line-height: 1.5;
+  max-width: 600px;
+}
+
+.access-denied {
+  text-align: center;
+  padding: var(--spacing-xl);
+  background: var(--bg-secondary);
+  border-radius: var(--border-radius);
+  border: 1px solid var(--border-color);
+}
+
+.access-denied h1 {
+  color: var(--color-danger);
+  margin-bottom: var(--spacing-md);
+}
+
+.access-denied p {
+  color: var(--text-secondary);
+  font-size: var(--font-size-lg);
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .users-page {
+    padding: var(--spacing-md);
+  }
+
+  .users-page h1 {
+    font-size: var(--font-size-2xl);
+  }
+
+  .page-description {
+    font-size: var(--font-size-sm);
+  }
 }
