@@ -1,0 +1,58 @@
+.loading-spinner {
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  display: inline-block;
+}
+
+/* Sizes */
+.loading-spinner-sm {
+  width: 1rem;
+  height: 1rem;
+  border-width: 2px;
+}
+
+.loading-spinner-md {
+  width: 1.5rem;
+  height: 1.5rem;
+  border-width: 2px;
+}
+
+.loading-spinner-lg {
+  width: 2rem;
+  height: 2rem;
+  border-width: 3px;
+}
+
+/* Colors */
+.loading-spinner-primary {
+  border: currentColor solid;
+  border-top-color: var(--primary-color);
+  border-right-color: transparent;
+  border-bottom-color: transparent;
+  border-left-color: transparent;
+  color: var(--border-color);
+}
+
+.loading-spinner-secondary {
+  border: currentColor solid;
+  border-top-color: var(--secondary-color);
+  border-right-color: transparent;
+  border-bottom-color: transparent;
+  border-left-color: transparent;
+  color: var(--border-color);
+}
+
+.loading-spinner-white {
+  border: currentColor solid;
+  border-top-color: white;
+  border-right-color: transparent;
+  border-bottom-color: transparent;
+  border-left-color: transparent;
+  color: rgba(255, 255, 255, 0.3);
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

@@ -1,0 +1,101 @@
+.card {
+  background-color: var(--bg-primary);
+  border-radius: var(--radius-lg);
+  transition: all var(--transition-fast);
+  width: 100%;
+  text-align: left;
+}
+
+.card-default {
+  border: 1px solid var(--border-color);
+}
+
+.card-outlined {
+  border: 2px solid var(--border-color);
+}
+
+.card-elevated {
+  border: 1px solid var(--border-color);
+  box-shadow: var(--shadow-md);
+}
+
+.card-clickable {
+  cursor: pointer;
+}
+
+.card-clickable:hover {
+  border-color: var(--border-hover);
+  box-shadow: var(--shadow-lg);
+}
+
+.card-clickable:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgb(37 99 235 / 0.1);
+}
+
+/* Padding variants */
+.card-padding-none {
+  padding: 0;
+}
+
+.card-padding-sm {
+  padding: var(--spacing-sm);
+}
+
+.card-padding-md {
+  padding: var(--spacing-md);
+}
+
+.card-padding-lg {
+  padding: var(--spacing-lg);
+}
+
+.card-header {
+  margin-bottom: var(--spacing-md);
+}
+
+.card-title {
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0 0 var(--spacing-xs) 0;
+}
+
+.card-subtitle {
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+  margin: 0;
+  line-height: 1.4;
+}
+
+.card-content {
+  flex: 1;
+}
+
+.card-footer {
+  margin-top: var(--spacing-md);
+  padding-top: var(--spacing-md);
+  border-top: 1px solid var(--border-color);
+}
+
+/* Special handling for clickable cards with no padding */
+.card-clickable.card-padding-none {
+  display: flex;
+  flex-direction: column;
+}
+
+.card-clickable.card-padding-none .card-header,
+.card-clickable.card-padding-none .card-content,
+.card-clickable.card-padding-none .card-footer {
+  padding-left: var(--spacing-md);
+  padding-right: var(--spacing-md);
+}
+
+.card-clickable.card-padding-none .card-header {
+  padding-top: var(--spacing-md);
+}
+
+.card-clickable.card-padding-none .card-footer {
+  padding-bottom: var(--spacing-md);
+}
