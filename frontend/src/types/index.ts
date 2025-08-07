@@ -1,4 +1,7 @@
-// API Response types
+/**
+ * Frontend type definitions for the Web Communication CMS
+ */
+
 export interface ApiResponse<T = any> {
   success: boolean;
   data?: T;
@@ -10,7 +13,17 @@ export interface ApiResponse<T = any> {
   };
 }
 
-// Content types
+export interface User {
+  id: string;
+  username: string;
+  email: string;
+  role: 'administrator' | 'editor' | 'read-only';
+  createdAt: string;
+  updatedAt: string;
+  lastLogin: string | null;
+  isActive: boolean;
+}
+
 export interface Content {
   id: string;
   title: string;
@@ -22,42 +35,9 @@ export interface Content {
   metadata: Record<string, any>;
   createdAt: string;
   updatedAt: string;
-  publishedAt?: string;
+  publishedAt: string | null;
 }
 
-// Document types
-export interface Document {
-  id: string;
-  filename: string;
-  originalName: string;
-  mimeType: string;
-  size: number;
-  folderId: string;
-  uploadedBy: string;
-  createdAt: string;
-  metadata: {
-    title?: string;
-    description?: string;
-    tags?: string[];
-  };
-}
-
-// Folder types
-export interface Folder {
-  id: string;
-  name: string;
-  parentId: string | null;
-  isPublic: boolean;
-  permissions: {
-    read: string[];
-    write: string[];
-  };
-  createdBy: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
-// Template types
 export interface Template {
   id: string;
   name: string;
@@ -72,6 +52,8 @@ export interface Template {
   };
   contentFields: TemplateField[];
   isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface TemplateField {
@@ -80,4 +62,37 @@ export interface TemplateField {
   type: 'text' | 'textarea' | 'rich-text' | 'image' | 'link';
   required: boolean;
   validation: Record<string, any>;
+}
+
+export interface ContentFormData {
+  title: string;
+  slug: string;
+  body: string;
+  templateId: string;
+  status: 'draft' | 'published' | 'archived';
+  metadata: Record<string, any>;
+}
+
+export interface ContentListItem {
+  id: string;
+  title: string;
+  slug: string;
+  status: 'draft' | 'published' | 'archived';
+  templateName: string;
+  authorName: string;
+  createdAt: string;
+  updatedAt: string;
+  publishedAt: string | null;
+}
+
+export interface ContentFilter {
+  status?: 'draft' | 'published' | 'archived';
+  templateId?: string;
+  authorId?: string;
+  search?: string;
+}
+
+export interface ValidationError {
+  field: string;
+  message: string;
 }

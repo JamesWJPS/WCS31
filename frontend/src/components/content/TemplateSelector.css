@@ -1,0 +1,126 @@
+.template-selector {
+  margin-bottom: 1.5rem;
+}
+
+.template-select-wrapper {
+  margin-bottom: 1rem;
+}
+
+.template-preview {
+  border: 1px solid #e5e7eb;
+  border-radius: 0.5rem;
+  padding: 1rem;
+  background-color: #f9fafb;
+}
+
+.template-preview-title {
+  margin: 0 0 1rem 0;
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #111827;
+}
+
+.template-info {
+  margin-bottom: 1rem;
+}
+
+.template-description {
+  margin: 0 0 1rem 0;
+  color: #6b7280;
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+.template-features,
+.template-fields {
+  margin-bottom: 1rem;
+}
+
+.template-features h5,
+.template-fields h5 {
+  margin: 0 0 0.5rem 0;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #374151;
+}
+
+.features-list,
+.fields-list {
+  margin: 0;
+  padding-left: 1.25rem;
+  list-style-type: disc;
+}
+
+.features-list li,
+.fields-list li {
+  margin: 0.25rem 0;
+  font-size: 0.875rem;
+  color: #6b7280;
+}
+
+.field-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.field-name {
+  font-weight: 500;
+  color: #374151;
+}
+
+.field-type {
+  font-size: 0.75rem;
+  color: #9ca3af;
+  font-style: italic;
+}
+
+.field-required {
+  color: #dc2626;
+  font-weight: 600;
+}
+
+.template-html-preview {
+  border-top: 1px solid #e5e7eb;
+  padding-top: 1rem;
+}
+
+.template-html-preview h5 {
+  margin: 0 0 0.5rem 0;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #374151;
+}
+
+.html-preview {
+  background-color: #1f2937;
+  color: #f9fafb;
+  padding: 0.75rem;
+  border-radius: 0.375rem;
+  font-family: 'Courier New', monospace;
+  font-size: 0.75rem;
+  line-height: 1.4;
+  overflow-x: auto;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+/* Accessibility improvements */
+@media (prefers-reduced-motion: reduce) {
+  .template-preview {
+    transition: none;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .template-preview {
+    border-color: #000;
+  }
+  
+  .html-preview {
+    background-color: #000;
+    color: #fff;
+    border: 1px solid #fff;
+  }
+}
