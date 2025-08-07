@@ -1,16 +1,27 @@
 .documents-page {
-  max-width: 1200px;
-  margin: 0 auto;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
 }
 
-.documents-page h1 {
-  font-size: var(--font-size-3xl);
-  font-weight: 600;
-  color: var(--text-primary);
-  margin-bottom: var(--spacing-lg);
+.documents-page__unauthorized {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  text-align: center;
+  gap: 1rem;
 }
 
-.documents-page p {
-  color: var(--text-secondary);
-  font-size: var(--font-size-base);
+.documents-page__unauthorized h1 {
+  margin: 0;
+  font-size: 2rem;
+  color: #dc2626;
+}
+
+.documents-page__unauthorized p {
+  margin: 0;
+  font-size: 1.125rem;
+  color: #6b7280;
 }

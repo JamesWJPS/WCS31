@@ -96,3 +96,61 @@ export interface ValidationError {
   field: string;
   message: string;
 }
+
+export interface Document {
+  id: string;
+  filename: string;
+  originalName: string;
+  mimeType: string;
+  size: number;
+  folderId: string;
+  uploadedBy: string;
+  createdAt: string;
+  metadata: {
+    title?: string;
+    description?: string;
+    tags?: string[];
+    hash?: string;
+  };
+}
+
+export interface Folder {
+  id: string;
+  name: string;
+  parentId: string | null;
+  isPublic: boolean;
+  permissions: {
+    read: string[];
+    write: string[];
+  };
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface FolderTreeNode extends Folder {
+  children: FolderTreeNode[];
+  documentCount?: number;
+  totalSize?: number;
+}
+
+export interface FolderContents {
+  folder: Folder;
+  folders: Folder[];
+  documents: Document[];
+}
+
+export interface DocumentFilter {
+  search?: string;
+  folderId?: string;
+  mimeType?: string;
+  tags?: string[];
+  uploadedBy?: string;
+}
+
+export interface UploadProgress {
+  file: File;
+  progress: number;
+  status: 'pending' | 'uploading' | 'completed' | 'error';
+  error?: string;
+}

@@ -1,0 +1,212 @@
+.folder-permissions {
+  padding: 1.5rem;
+  max-width: 600px;
+  width: 100%;
+}
+
+.folder-permissions__error {
+  margin-bottom: 1.5rem;
+}
+
+.folder-permissions__loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem;
+  gap: 1rem;
+}
+
+.folder-permissions__loading p {
+  margin: 0;
+  color: #6b7280;
+}
+
+.folder-permissions__no-access {
+  text-align: center;
+  padding: 2rem;
+}
+
+.folder-permissions__no-access p {
+  margin: 0 0 1.5rem 0;
+  color: #6b7280;
+  font-size: 1.125rem;
+}
+
+.folder-permissions__section {
+  margin-bottom: 2rem;
+}
+
+.folder-permissions__section:last-of-type {
+  margin-bottom: 1.5rem;
+}
+
+.folder-permissions__section-title {
+  margin: 0 0 1rem 0;
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #374151;
+  border-bottom: 1px solid #e5e7eb;
+  padding-bottom: 0.5rem;
+}
+
+.folder-permissions__public-toggle {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.folder-permissions__toggle-label {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.folder-permissions__checkbox {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+}
+
+.folder-permissions__toggle-text {
+  font-size: 1rem;
+  color: #374151;
+}
+
+.folder-permissions__toggle-description {
+  margin: 0;
+  font-size: 0.875rem;
+  color: #6b7280;
+  line-height: 1.4;
+  margin-left: 2.25rem;
+}
+
+.folder-permissions__no-users {
+  margin: 0;
+  color: #6b7280;
+  font-style: italic;
+  text-align: center;
+  padding: 2rem;
+}
+
+.folder-permissions__users {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.folder-permissions__user {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem;
+  background-color: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  gap: 1rem;
+}
+
+.folder-permissions__user-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.folder-permissions__user-name {
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 0.25rem;
+}
+
+.folder-permissions__user-details {
+  font-size: 0.875rem;
+  color: #6b7280;
+}
+
+.folder-permissions__permission-select {
+  min-width: 140px;
+  flex-shrink: 0;
+}
+
+.folder-permissions__help-title {
+  margin: 0 0 0.75rem 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #374151;
+}
+
+.folder-permissions__help {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.folder-permissions__help-item {
+  padding: 0.75rem;
+  background-color: #f3f4f6;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  line-height: 1.4;
+}
+
+.folder-permissions__help-item strong {
+  color: #374151;
+}
+
+.folder-permissions__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #e5e7eb;
+}
+
+/* Responsive design */
+@media (max-width: 640px) {
+  .folder-permissions {
+    padding: 1rem;
+  }
+
+  .folder-permissions__user {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.75rem;
+  }
+
+  .folder-permissions__permission-select {
+    min-width: auto;
+  }
+
+  .folder-permissions__actions {
+    flex-direction: column-reverse;
+  }
+
+  .folder-permissions__toggle-description {
+    margin-left: 0;
+    margin-top: 0.5rem;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .folder-permissions__user {
+    border-width: 2px;
+  }
+
+  .folder-permissions__checkbox {
+    border: 2px solid #374151;
+  }
+}
+
+/* Focus management */
+.folder-permissions__checkbox:focus {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+.folder-permissions__toggle-label:focus-within {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
