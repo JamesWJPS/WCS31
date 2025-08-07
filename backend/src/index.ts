@@ -2,7 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import dotenv from 'dotenv';
-import { authRoutes, userRoutes, contentRoutes, fileRoutes, documentRoutes, folderRoutes } from './routes';
+import { authRoutes, userRoutes, contentRoutes, fileRoutes, documentRoutes, folderRoutes, publicRoutes } from './routes';
 import { initializeDatabase } from './utils/database';
 
 // Load environment variables
@@ -26,6 +26,9 @@ app.use('/api/content', contentRoutes);
 app.use('/api/files', fileRoutes);
 app.use('/api/documents', documentRoutes);
 app.use('/api/folders', folderRoutes);
+
+// Public routes (no /api prefix for public website)
+app.use('/', publicRoutes);
 
 // Health check endpoint
 app.get('/health', (_req, res) => {

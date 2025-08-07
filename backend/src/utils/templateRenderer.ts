@@ -4,6 +4,7 @@
 
 import { JSDOM } from 'jsdom';
 import { Template, TemplateField, Content } from '../models/interfaces';
+import { validateAccessibility, AccessibilityReport } from './accessibilityValidator';
 
 export interface RenderContext {
   content: Content;
@@ -15,6 +16,7 @@ export interface RenderResult {
   html: string;
   errors: string[];
   warnings: string[];
+  accessibilityReport?: AccessibilityReport;
 }
 
 /**
@@ -56,10 +58,23 @@ export class TemplateRenderer {
       // Set page metadata
       this.setPageMetadata(document, content);
 
+      const html = dom.serialize();
+
+      // Validate accessibility
+      const accessibilityReport = validateAccessibility(html);
+
+      // Add accessibility errors to main errors if critical
+      const criticalAccessibilityErrors = accessibilityReport.issues
+        .filter(issue => issue.level === 'error')
+        .map(issue => `Accessibility: ${issue.message}`);
+      
+      errors.push(...criticalAccessibilityErrors);
+
       return {
-        html: dom.serialize(),
+        html,
         errors,
         warnings,
+        accessibilityReport,
       };
 
     } catch (error) {
