@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useReducer, useEffect, ReactNode } from 'react';
+import { authService } from '../services/authService';
 
 // Types
 export interface User {
@@ -34,9 +35,9 @@ interface AuthContextType extends AuthState {
 // Initial state
 const initialState: AuthState = {
   user: null,
-  token: localStorage.getItem('token'),
+  token: authService.getStoredToken(),
   isAuthenticated: false,
-  isLoading: false,
+  isLoading: true, // Start with loading true to check existing token
   error: null,
 };
 
@@ -101,22 +102,69 @@ interface AuthProviderProps {
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [state, dispatch] = useReducer(authReducer, initialState);
 
-  // Check for existing token on mount
+  // Check for existing token on mount and validate it
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (token) {
-      // TODO: Validate token with backend and get user info
-      // For now, we'll implement this in the authentication task
-    }
+    const initializeAuth = async () => {
+      const token = authService.getStoredToken();
+      
+      if (!token) {
+        dispatch({ type: 'SET_LOADING', payload: false });
+        return;
+      }
+
+      // Check if token is expired
+      if (authService.isTokenExpired(token)) {
+        authService.removeStoredToken();
+        dispatch({ type: 'LOGOUT' });
+        dispatch({ type: 'SET_LOADING', payload: false });
+        return;
+      }
+
+      try {
+        // Validate token with backend and get user info
+        const userProfile = await authService.getProfile();
+        dispatch({ 
+          type: 'LOGIN_SUCCESS', 
+          payload: { 
+            user: {
+              id: userProfile.id,
+              username: userProfile.username,
+              email: userProfile.email,
+              role: userProfile.role,
+              isActive: userProfile.isActive,
+            }, 
+            token 
+          } 
+        });
+      } catch (error) {
+        // Token is invalid, remove it
+        authService.removeStoredToken();
+        dispatch({ type: 'LOGOUT' });
+      } finally {
+        dispatch({ type: 'SET_LOADING', payload: false });
+      }
+    };
+
+    initializeAuth();
   }, []);
 
-  const login = async (_username: string, _password: string): Promise<void> => {
+  const login = async (username: string, password: string): Promise<void> => {
     dispatch({ type: 'LOGIN_START' });
     
     try {
-      // TODO: Implement actual API call in authentication task
-      // This is a placeholder for the structure
-      throw new Error('Login implementation pending');
+      const response = await authService.login({ username, password });
+      
+      // Store token
+      authService.setStoredToken(response.token);
+      
+      // Update state
+      dispatch({ 
+        type: 'LOGIN_SUCCESS', 
+        payload: { 
+          user: response.user, 
+          token: response.token 
+        } 
+      });
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Login failed';
       dispatch({ type: 'LOGIN_FAILURE', payload: errorMessage });
@@ -124,9 +172,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
-  const logout = (): void => {
-    localStorage.removeItem('token');
-    dispatch({ type: 'LOGOUT' });
+  const logout = async (): Promise<void> => {
+    try {
+      await authService.logout();
+    } catch (error) {
+      console.warn('Logout API call failed:', error);
+    } finally {
+      authService.removeStoredToken();
+      dispatch({ type: 'LOGOUT' });
+    }
   };
 
   const clearError = (): void => {
@@ -147,11 +201,5 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   );
 };
 
-// Hook to use auth context
-export const useAuth = (): AuthContextType => {
-  const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
-};
+// Export the context for use in custom hooks
+export { AuthContext };

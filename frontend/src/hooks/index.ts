@@ -1,2 +1,1 @@
-// Custom React hooks will be defined here
-export {};
+export { default as useAuth } from './useAuth';
