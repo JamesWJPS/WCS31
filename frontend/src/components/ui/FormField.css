@@ -26,13 +26,43 @@
   font-size: var(--font-size-sm);
   color: var(--error-color);
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: var(--spacing-xs);
+  line-height: 1.4;
+  margin-top: var(--spacing-xs);
 }
 
-.form-field-error-text::before {
-  content: "⚠";
+.form-field-error-text--required {
+  font-weight: 500;
+}
+
+.form-field-error-text--email,
+.form-field-error-text--url,
+.form-field-error-text--pattern {
+  color: #dc2626;
+}
+
+.form-field-error-text--minLength,
+.form-field-error-text--maxLength {
+  color: #d97706;
+}
+
+.form-field-error-text--custom {
+  color: #7c2d12;
+}
+
+.form-field-error-icon {
+  position: absolute;
+  right: var(--spacing-sm);
+  top: 50%;
+  transform: translateY(-50%);
   font-size: var(--font-size-sm);
+  pointer-events: none;
+}
+
+.form-field-error-icon-inline {
+  flex-shrink: 0;
+  margin-top: 0.125rem;
 }
 
 .form-field-helper-text {
