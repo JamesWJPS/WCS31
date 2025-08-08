@@ -3,7 +3,7 @@ import cors from 'cors';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import dotenv from 'dotenv';
-import { authRoutes, userRoutes, contentRoutes, fileRoutes, documentRoutes, folderRoutes, publicRoutes } from './routes';
+import { authRoutes, userRoutes, contentRoutes, fileRoutes, documentRoutes, folderRoutes, publicRoutes, adminRoutes } from './routes';
 import { initializeDatabase } from './utils/database';
 import { 
   errorHandler, 
@@ -122,6 +122,7 @@ app.use('/api/content', contentRoutes);
 app.use('/api/files', fileRoutes);
 app.use('/api/documents', documentRoutes);
 app.use('/api/folders', folderRoutes);
+app.use('/api/admin', adminRoutes);
 
 // Public routes (no /api prefix for public website)
 app.use('/', publicRoutes);

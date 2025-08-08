@@ -5,3 +5,4 @@ export * from './FileController';
 export * from './FolderController';
 export * from './UserController';
 export * from './PublicController';
+export * from './AdminController';

@@ -6,3 +6,6 @@ export { DocumentService } from './DocumentService';
 export { FolderService } from './FolderService';
 export { FileService } from './FileService';
 export { PublicService } from './PublicService';
+export { AdminService } from './AdminService';
+export { SystemMonitoringService } from './SystemMonitoringService';
+export { DataIntegrityService } from './DataIntegrityService';

@@ -5,3 +5,4 @@ export { default as fileRoutes } from './files';
 export { default as documentRoutes } from './documents';
 export { default as folderRoutes } from './folders';
 export { default as publicRoutes } from './public';
+export { adminRoutes } from './admin';
