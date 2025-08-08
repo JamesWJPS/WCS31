@@ -1,0 +1,40 @@
+{
+  "admin": {
+    "username": "admin",
+    "password": "admin123",
+    "email": "admin@test.com",
+    "role": "administrator"
+  },
+  "editor": {
+    "username": "editor",
+    "password": "editor123",
+    "email": "editor@test.com",
+    "role": "editor"
+  },
+  "readonly": {
+    "username": "readonly",
+    "password": "readonly123",
+    "email": "readonly@test.com",
+    "role": "read-only"
+  },
+  "testUsers": [
+    {
+      "username": "test-editor-1",
+      "password": "password123",
+      "email": "test-editor-1@test.com",
+      "role": "editor"
+    },
+    {
+      "username": "test-editor-2",
+      "password": "password123",
+      "email": "test-editor-2@test.com",
+      "role": "editor"
+    },
+    {
+      "username": "test-readonly-1",
+      "password": "password123",
+      "email": "test-readonly-1@test.com",
+      "role": "read-only"
+    }
+  ]
+}

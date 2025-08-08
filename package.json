@@ -16,6 +16,19 @@
     "start": "npm run start --workspace=backend",
     "test": "npm run test --workspace=backend && npm run test --workspace=frontend",
     "test:ci": "CI=true npm run test",
+    "test:e2e": "node cypress/scripts/run-e2e-tests.js development",
+    "test:e2e:staging": "node cypress/scripts/run-e2e-tests.js staging",
+    "test:e2e:headless": "cypress run",
+    "test:e2e:open": "cypress open",
+    "test:e2e:auth": "cypress run --spec 'cypress/e2e/auth/**/*.cy.ts'",
+    "test:e2e:content": "cypress run --spec 'cypress/e2e/content/**/*.cy.ts'",
+    "test:e2e:documents": "cypress run --spec 'cypress/e2e/documents/**/*.cy.ts'",
+    "test:e2e:roles": "cypress run --spec 'cypress/e2e/user-roles/**/*.cy.ts'",
+    "test:e2e:visual": "cypress run --spec 'cypress/e2e/visual/**/*.cy.ts'",
+    "test:e2e:performance": "cypress run --spec 'cypress/e2e/performance/**/*.cy.ts'",
+    "test:accessibility": "cypress run --spec 'cypress/e2e/**/*.cy.ts' --env grepTags='@accessibility'",
+    "seed:test": "npm run seed:test --workspace=backend",
+    "cleanup:test": "npm run cleanup:test --workspace=backend",
     "lint": "npm run lint --workspace=backend && npm run lint --workspace=frontend",
     "format": "npm run format --workspace=backend && npm run format --workspace=frontend",
     "clean": "npm run clean --workspace=backend && npm run clean --workspace=frontend",
@@ -23,7 +36,13 @@
     "health-check": "npm run health-check --workspace=backend"
   },
   "devDependencies": {
-    "concurrently": "^8.2.2"
+    "@cypress/code-coverage": "^3.14.5",
+    "@testing-library/cypress": "^10.0.3",
+    "concurrently": "^8.2.2",
+    "cypress": "^14.5.4",
+    "cypress-axe": "^1.6.0",
+    "cypress-real-events": "^1.14.0",
+    "cypress-visual-regression": "^5.3.0"
   },
   "engines": {
     "node": ">=18.0.0",

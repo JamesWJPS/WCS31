@@ -1,0 +1,58 @@
+{
+  "newsArticles": [
+    {
+      "title": "Community Garden Project Approved",
+      "summary": "The town council has approved funding for a new community garden.",
+      "body": "After months of planning and community input, the town council has unanimously approved the community garden project. The garden will be located in Central Park and will feature 50 individual plots available for rent by residents.",
+      "templateId": "news-template",
+      "status": "published"
+    },
+    {
+      "title": "Road Maintenance Schedule",
+      "summary": "Upcoming road maintenance will affect traffic on Main Street.",
+      "body": "The Department of Public Works will be conducting routine maintenance on Main Street from March 1-15. Drivers should expect delays and are encouraged to use alternate routes during peak hours.",
+      "templateId": "news-template",
+      "status": "published"
+    }
+  ],
+  "events": [
+    {
+      "title": "Annual Town Hall Meeting",
+      "date": "2024-03-15",
+      "time": "19:00",
+      "location": "Community Center",
+      "description": "Join us for our annual town hall meeting where we'll discuss the budget, upcoming projects, and answer questions from residents.",
+      "templateId": "event-template",
+      "status": "published"
+    },
+    {
+      "title": "Spring Festival",
+      "date": "2024-04-20",
+      "time": "10:00",
+      "location": "Town Square",
+      "description": "Celebrate spring with live music, food vendors, and activities for the whole family. Free admission.",
+      "templateId": "event-template",
+      "status": "published"
+    }
+  ],
+  "meetings": [
+    {
+      "title": "Planning Committee Meeting Minutes",
+      "date": "2024-02-10",
+      "attendees": "John Smith (Chair), Mary Johnson, Robert Brown, Lisa Davis",
+      "agenda": "1. Review of zoning applications\n2. Discussion of new development proposals\n3. Environmental impact assessments\n4. Next meeting date",
+      "templateId": "meeting-template",
+      "status": "published"
+    }
+  ],
+  "policies": [
+    {
+      "title": "Public Records Access Policy",
+      "number": "POL-2024-001",
+      "effectiveDate": "2024-01-01",
+      "content": "This policy establishes procedures for public access to municipal records in accordance with state freedom of information laws.",
+      "templateId": "policy-template",
+      "status": "published"
+    }
+  ]
+}

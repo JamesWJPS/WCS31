@@ -1,0 +1,42 @@
+{
+  "templates": [
+    {
+      "id": "news-template",
+      "name": "News Article",
+      "description": "Template for news articles and announcements",
+      "htmlStructure": "<article class=\"news-article\"><header><h1 class=\"news-title\">{{title}}</h1><p class=\"news-summary\">{{summary}}</p></header><div class=\"news-content\">{{body}}</div><footer class=\"news-meta\"><time>{{publishedAt}}</time></footer></article>",
+      "cssStyles": ".news-article { max-width: 800px; margin: 0 auto; } .news-title { color: #2c3e50; font-size: 2rem; margin-bottom: 1rem; } .news-summary { font-weight: 600; color: #7f8c8d; margin-bottom: 1.5rem; } .news-content { line-height: 1.6; } .news-meta { margin-top: 2rem; padding-top: 1rem; border-top: 1px solid #ecf0f1; color: #95a5a6; }",
+      "accessibilityFeatures": {
+        "skipLinks": true,
+        "headingStructure": true,
+        "altTextRequired": true,
+        "colorContrastCompliant": true
+      },
+      "contentFields": [
+        { "id": "title", "name": "Title", "type": "text", "required": true },
+        { "id": "summary", "name": "Summary", "type": "textarea", "required": true },
+        { "id": "body", "name": "Content", "type": "rich-text", "required": true }
+      ]
+    },
+    {
+      "id": "event-template",
+      "name": "Event Announcement",
+      "description": "Template for event announcements and invitations",
+      "htmlStructure": "<article class=\"event-announcement\"><header><h1 class=\"event-title\">{{title}}</h1></header><div class=\"event-details\"><div class=\"event-datetime\"><span class=\"event-date\" data-testid=\"event-date-display\">{{date}}</span><span class=\"event-time\">{{time}}</span></div><div class=\"event-location\" data-testid=\"event-location-display\">{{location}}</div></div><div class=\"event-description\" data-testid=\"event-description-display\">{{description}}</div></article>",
+      "cssStyles": ".event-announcement { max-width: 800px; margin: 0 auto; } .event-title { color: #e74c3c; font-size: 2rem; margin-bottom: 1rem; } .event-details { background: #f8f9fa; padding: 1.5rem; border-radius: 8px; margin: 1.5rem 0; } .event-datetime { display: flex; gap: 1rem; margin-bottom: 1rem; } .event-date { font-weight: 600; color: #2c3e50; } .event-time { color: #7f8c8d; } .event-location { font-weight: 600; color: #27ae60; } .event-description { line-height: 1.6; }",
+      "accessibilityFeatures": {
+        "skipLinks": true,
+        "headingStructure": true,
+        "altTextRequired": true,
+        "colorContrastCompliant": true
+      },
+      "contentFields": [
+        { "id": "title", "name": "Event Title", "type": "text", "required": true },
+        { "id": "date", "name": "Event Date", "type": "date", "required": true },
+        { "id": "time", "name": "Event Time", "type": "time", "required": false },
+        { "id": "location", "name": "Location", "type": "text", "required": true },
+        { "id": "description", "name": "Description", "type": "rich-text", "required": true }
+      ]
+    }
+  ]
+}
