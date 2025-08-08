@@ -1,0 +1,58 @@
+version: '3.8'
+
+services:
+  # Development database
+  db:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: web_communication_cms_dev
+      POSTGRES_USER: cms_user
+      POSTGRES_PASSWORD: dev_password
+    volumes:
+      - postgres_dev_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U cms_user -d web_communication_cms_dev"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Development backend with hot reload
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.dev
+    environment:
+      NODE_ENV: development
+      DATABASE_URL: postgresql://cms_user:dev_password@db:5432/web_communication_cms_dev
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+      - uploads_dev_data:/app/uploads
+    ports:
+      - "3001:3001"
+    depends_on:
+      db:
+        condition: service_healthy
+    command: npm run dev
+
+  # Development frontend with hot reload
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dev
+    environment:
+      VITE_API_BASE_URL: http://localhost:3001/api
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    ports:
+      - "5173:5173"
+    depends_on:
+      - backend
+    command: npm run dev
+
+volumes:
+  postgres_dev_data:
+  uploads_dev_data:

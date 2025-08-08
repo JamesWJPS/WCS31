@@ -2,6 +2,34 @@
 
 A content management system designed specifically for Town and Parish Councils to provide WCAG 2.2 accessible websites.
 
+## Quick Start
+
+### Development
+
+```bash
+# Clone repository
+git clone <repository-url>
+cd web-communication-cms
+
+# Install dependencies
+npm install
+
+# Start development servers
+npm run dev
+```
+
+### Production Deployment
+
+```bash
+# Quick deployment with Docker
+./scripts/deploy.sh production
+
+# Or on Windows
+scripts\deploy.bat production
+```
+
+For detailed deployment instructions, see [DEPLOYMENT.md](DEPLOYMENT.md).
+
 ## Project Structure
 
 This is a monorepo containing:

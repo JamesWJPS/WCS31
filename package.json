@@ -12,9 +12,15 @@
     "dev:backend": "npm run dev --workspace=backend",
     "dev:frontend": "npm run dev --workspace=frontend",
     "build": "npm run build --workspace=backend && npm run build --workspace=frontend",
+    "build:prod": "NODE_ENV=production npm run build",
+    "start": "npm run start --workspace=backend",
     "test": "npm run test --workspace=backend && npm run test --workspace=frontend",
+    "test:ci": "CI=true npm run test",
     "lint": "npm run lint --workspace=backend && npm run lint --workspace=frontend",
-    "format": "npm run format --workspace=backend && npm run format --workspace=frontend"
+    "format": "npm run format --workspace=backend && npm run format --workspace=frontend",
+    "clean": "npm run clean --workspace=backend && npm run clean --workspace=frontend",
+    "deploy:build": "npm run clean && npm run build:prod",
+    "health-check": "npm run health-check --workspace=backend"
   },
   "devDependencies": {
     "concurrently": "^8.2.2"
