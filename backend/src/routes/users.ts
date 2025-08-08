@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { UserController } from '../controllers/UserController';
 import { authenticateToken, requireAdmin, Permission } from '../middleware/auth';
 import { requirePermissions, conditionalAuth } from '../middleware/decorators';
+import { routeSecurity } from '../middleware/security';
 
 const router = Router();
 const userController = new UserController();
@@ -47,6 +48,7 @@ router.get(
  */
 router.post(
   '/',
+  ...routeSecurity.users,
   authenticateToken,
   requirePermissions([Permission.CREATE_USER]),
   userController.createUser
@@ -59,6 +61,7 @@ router.post(
  */
 router.put(
   '/:id',
+  ...routeSecurity.users,
   authenticateToken,
   requirePermissions([Permission.UPDATE_USER]),
   userController.updateUser
@@ -71,6 +74,7 @@ router.put(
  */
 router.patch(
   '/:id/profile',
+  ...routeSecurity.users,
   authenticateToken,
   conditionalAuth({
     allowSelf: true,
@@ -87,6 +91,7 @@ router.patch(
  */
 router.patch(
   '/:id/password',
+  ...routeSecurity.users,
   authenticateToken,
   conditionalAuth({
     allowSelf: true,
@@ -103,6 +108,7 @@ router.patch(
  */
 router.delete(
   '/:id',
+  ...routeSecurity.users,
   authenticateToken,
   requirePermissions([Permission.DELETE_USER]),
   userController.deleteUser

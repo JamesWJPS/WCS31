@@ -2,6 +2,9 @@ import { Router } from 'express';
 import { DocumentController } from '../controllers/DocumentController';
 import { authenticateToken } from '../middleware/auth';
 import { uploadSingle, uploadMultiple, validateUploadPermissions } from '../middleware/fileUpload';
+import { routeSecurity } from '../middleware/security';
+import { sanitizeFileUpload } from '../middleware/sanitization';
+import { validateFileUpload } from '../utils/fileValidation';
 
 const router = Router();
 const documentController = new DocumentController();
@@ -16,8 +19,14 @@ router.use(authenticateToken);
  */
 router.post(
   '/upload',
+  ...routeSecurity.upload,
   validateUploadPermissions,
   uploadSingle('document'),
+  validateFileUpload({
+    maxFileSize: 10 * 1024 * 1024, // 10MB
+    scanForMalware: true
+  }),
+  sanitizeFileUpload,
   documentController.uploadDocument
 );
 
@@ -28,8 +37,15 @@ router.post(
  */
 router.post(
   '/upload-bulk',
+  ...routeSecurity.upload,
   validateUploadPermissions,
   uploadMultiple('documents', 10),
+  validateFileUpload({
+    maxFileSize: 10 * 1024 * 1024, // 10MB
+    maxFiles: 10,
+    scanForMalware: true
+  }),
+  sanitizeFileUpload,
   documentController.uploadBulkDocuments
 );
 

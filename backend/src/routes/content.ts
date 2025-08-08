@@ -2,6 +2,8 @@ import { Router } from 'express';
 import { ContentController } from '../controllers/ContentController';
 import { authenticateToken } from '../middleware/auth';
 import { requireRole } from '../middleware/decorators';
+import { routeSecurity } from '../middleware/security';
+import { sanitizeContent } from '../middleware/sanitization';
 
 const router = Router();
 const contentController = new ContentController();
@@ -15,14 +17,40 @@ router.use(authenticateToken);
 // Content CRUD operations
 router.get('/', contentController.getContent);
 router.get('/:id', contentController.getContentById);
-router.post('/', requireRole(['administrator', 'editor']), contentController.createContent);
-router.put('/:id', requireRole(['administrator', 'editor']), contentController.updateContent);
-router.delete('/:id', requireRole(['administrator', 'editor']), contentController.deleteContent);
+router.post('/', 
+  ...routeSecurity.content,
+  sanitizeContent,
+  requireRole(['administrator', 'editor']), 
+  contentController.createContent
+);
+router.put('/:id', 
+  ...routeSecurity.content,
+  sanitizeContent,
+  requireRole(['administrator', 'editor']), 
+  contentController.updateContent
+);
+router.delete('/:id', 
+  ...routeSecurity.content,
+  requireRole(['administrator', 'editor']), 
+  contentController.deleteContent
+);
 
 // Content status management
-router.post('/:id/publish', requireRole(['administrator', 'editor']), contentController.publishContent);
-router.post('/:id/unpublish', requireRole(['administrator', 'editor']), contentController.unpublishContent);
-router.post('/:id/archive', requireRole(['administrator', 'editor']), contentController.archiveContent);
+router.post('/:id/publish', 
+  ...routeSecurity.content,
+  requireRole(['administrator', 'editor']), 
+  contentController.publishContent
+);
+router.post('/:id/unpublish', 
+  ...routeSecurity.content,
+  requireRole(['administrator', 'editor']), 
+  contentController.unpublishContent
+);
+router.post('/:id/archive', 
+  ...routeSecurity.content,
+  requireRole(['administrator', 'editor']), 
+  contentController.archiveContent
+);
 
 // Content preview
 router.get('/:id/preview', contentController.getContentPreview);

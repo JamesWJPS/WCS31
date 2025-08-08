@@ -14,6 +14,7 @@ import {
   handleUnhandledRejection,
   handleUncaughtException
 } from './middleware/errorHandler';
+import { applySecurity } from './middleware/security';
 
 // Load environment variables
 dotenv.config();
@@ -28,31 +29,8 @@ const PORT = process.env['PORT'] || 3001;
 // Trust proxy for rate limiting
 app.set('trust proxy', 1);
 
-// Security middleware
-app.use(helmet({
-  contentSecurityPolicy: {
-    directives: {
-      defaultSrc: ["'self'"],
-      styleSrc: ["'self'", "'unsafe-inline'"],
-      scriptSrc: ["'self'"],
-      imgSrc: ["'self'", "data:", "https:"],
-      connectSrc: ["'self'"],
-      fontSrc: ["'self'"],
-      objectSrc: ["'none'"],
-      mediaSrc: ["'self'"],
-      frameSrc: ["'none'"],
-    },
-  },
-  crossOriginEmbedderPolicy: false,
-}));
-
-app.use(cors({
-  origin: process.env.NODE_ENV === 'production' 
-    ? process.env.FRONTEND_URL || false
-    : true,
-  credentials: true,
-  optionsSuccessStatus: 200,
-}));
+// Apply comprehensive security middleware
+applySecurity(app);
 
 // Rate limiting
 const limiter = rateLimit({

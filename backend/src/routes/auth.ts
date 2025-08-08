@@ -1,6 +1,8 @@
 import { Router } from 'express';
 import { AuthController } from '../controllers/AuthController';
 import { authenticateToken, requireAdmin } from '../middleware/auth';
+import { routeSecurity } from '../middleware/security';
+import { sanitizeInputs } from '../middleware/sanitization';
 
 const router = Router();
 const authController = new AuthController();
@@ -10,21 +12,33 @@ const authController = new AuthController();
  * @desc User login
  * @access Public
  */
-router.post('/login', authController.login);
+router.post('/login', 
+  ...routeSecurity.auth,
+  sanitizeInputs({ body: { stripTags: true, maxLength: 100 } }),
+  authController.login
+);
 
 /**
  * @route POST /api/auth/register
  * @desc Register new user (admin only)
  * @access Private (Admin)
  */
-router.post('/register', authenticateToken, requireAdmin, authController.register);
+router.post('/register', 
+  ...routeSecurity.users,
+  authenticateToken, 
+  requireAdmin, 
+  authController.register
+);
 
 /**
  * @route POST /api/auth/refresh
  * @desc Refresh access token
  * @access Public
  */
-router.post('/refresh', authController.refreshToken);
+router.post('/refresh', 
+  ...routeSecurity.auth,
+  authController.refreshToken
+);
 
 /**
  * @route GET /api/auth/profile
@@ -38,6 +52,10 @@ router.get('/profile', authenticateToken, authController.getProfile as any);
  * @desc User logout
  * @access Private
  */
-router.post('/logout', authenticateToken, authController.logout);
+router.post('/logout', 
+  ...routeSecurity.auth,
+  authenticateToken, 
+  authController.logout
+);
 
 export default router;
