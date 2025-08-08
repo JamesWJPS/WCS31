@@ -3,6 +3,9 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { axe, toHaveNoViolations } from 'jest-axe';
 import Form from '../Form';
+import { runAccessibilityTestSuite } from '../../../test/accessibility';
+import { runKeyboardNavigationTests } from '../../../test/keyboardNavigation';
+import { testScreenReaderCompatibility } from '../../../test/screenReader';
 
 expect.extend(toHaveNoViolations);
 
@@ -139,5 +142,129 @@ describe('Form', () => {
     
     expect(mainHeading).toHaveTextContent('Main Form');
     expect(subHeading).toHaveTextContent('Subsection');
+  });
+
+  describe('Comprehensive Accessibility Tests', () => {
+    it('passes complete accessibility test suite', async () => {
+      const component = (
+        <Form 
+          title="Accessible Form"
+          description="This form is accessible"
+        >
+          <label htmlFor="name">Name</label>
+          <input id="name" type="text" required />
+          <label htmlFor="email">Email</label>
+          <input id="email" type="email" required />
+          <button type="submit">Submit</button>
+        </Form>
+      );
+
+      await runAccessibilityTestSuite(component, {
+        expectedFocusableElements: 3, // 2 inputs + 1 button
+        skipColorContrastTest: false
+      });
+    });
+
+    it('supports keyboard navigation', async () => {
+      const { container } = render(
+        <Form title="Keyboard Test Form">
+          <label htmlFor="field1">Field 1</label>
+          <input id="field1" type="text" />
+          <label htmlFor="field2">Field 2</label>
+          <input id="field2" type="text" />
+          <button type="submit">Submit</button>
+        </Form>
+      );
+
+      await runKeyboardNavigationTests(container, {
+        expectFocusable: true,
+        expectEnterActivation: true,
+        expectSpaceActivation: true
+      });
+    });
+
+    it('is compatible with screen readers', () => {
+      const { container } = render(
+        <Form 
+          title="Screen Reader Test"
+          description="Form for screen reader testing"
+          error="Test error message"
+        >
+          <fieldset>
+            <legend>Personal Information</legend>
+            <label htmlFor="firstName">First Name</label>
+            <input id="firstName" type="text" required aria-describedby="firstName-help" />
+            <div id="firstName-help">Enter your first name</div>
+            
+            <label htmlFor="lastName">Last Name</label>
+            <input id="lastName" type="text" required />
+          </fieldset>
+          <button type="submit">Submit Form</button>
+        </Form>
+      );
+
+      testScreenReaderCompatibility(container, {
+        expectAriaLabels: true,
+        expectFormLabels: true,
+        expectHeadingStructure: true,
+        expectLiveRegions: true
+      });
+    });
+
+    it('handles error states accessibly', async () => {
+      const { container } = render(
+        <Form 
+          title="Error Form"
+          error="Please fix the errors below"
+        >
+          <label htmlFor="errorField">Required Field</label>
+          <input 
+            id="errorField" 
+            type="text" 
+            aria-invalid="true"
+            aria-describedby="errorField-error"
+          />
+          <div id="errorField-error" role="alert">This field is required</div>
+          <button type="submit">Submit</button>
+        </Form>
+      );
+
+      // Check that error message has alert role
+      const errorMessage = screen.getByText('Please fix the errors below');
+      expect(errorMessage).toHaveAttribute('role', 'alert');
+
+      // Check field error association
+      const fieldError = screen.getByText('This field is required');
+      expect(fieldError).toHaveAttribute('role', 'alert');
+
+      // Run accessibility tests
+      const results = await axe(container);
+      expect(results).toHaveNoViolations();
+    });
+
+    it('supports loading state accessibility', () => {
+      const { container } = render(
+        <Form 
+          title="Loading Form"
+          loading={true}
+        >
+          <label htmlFor="loadingField">Field</label>
+          <input id="loadingField" type="text" />
+          <button type="submit">Submit</button>
+        </Form>
+      );
+
+      // Check for loading indicator
+      const loadingIndicator = screen.getByRole('status', { hidden: true });
+      expect(loadingIndicator).toBeInTheDocument();
+
+      // Check that form is properly disabled
+      const form = screen.getByRole('form');
+      expect(form).toHaveClass('form-loading');
+
+      testScreenReaderCompatibility(container, {
+        expectLiveRegions: true
+      });
+    });
   });
 });
