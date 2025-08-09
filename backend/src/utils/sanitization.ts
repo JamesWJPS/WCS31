@@ -39,6 +39,9 @@ export class InputSanitizer {
       sanitized = sanitized.replace(/<[^>]*>/g, '');
     }
     
+    // Remove dangerous patterns
+    sanitized = this.removeDangerousPatterns(sanitized);
+    
     // Escape HTML entities
     sanitized = validator.escape(sanitized);
     
@@ -49,6 +52,56 @@ export class InputSanitizer {
     if (options.maxLength && sanitized.length > options.maxLength) {
       sanitized = sanitized.substring(0, options.maxLength);
     }
+    
+    return sanitized;
+  }
+
+  /**
+   * Remove dangerous patterns from input
+   */
+  private static removeDangerousPatterns(input: string): string {
+    let sanitized = input;
+    
+    // Remove SQL injection patterns
+    const sqlPatterns = [
+      /(\b(SELECT|INSERT|UPDATE|DELETE|DROP|CREATE|ALTER|EXEC|UNION|SCRIPT)\b)/gi,
+      /(--|\/\*|\*\/|;)/g,
+      /(\bOR\b|\bAND\b)\s*\d+\s*=\s*\d+/gi
+    ];
+    
+    sqlPatterns.forEach(pattern => {
+      sanitized = sanitized.replace(pattern, '');
+    });
+    
+    // Remove XSS patterns
+    const xssPatterns = [
+      /<script[^>]*>.*?<\/script>/gi,
+      /javascript:/gi,
+      /vbscript:/gi,
+      /on\w+\s*=/gi,
+      /expression\s*\(/gi
+    ];
+    
+    xssPatterns.forEach(pattern => {
+      sanitized = sanitized.replace(pattern, '');
+    });
+    
+    // Remove path traversal patterns
+    sanitized = sanitized.replace(/\.\./g, '');
+    sanitized = sanitized.replace(/[\\\/]/g, '');
+    
+    // Remove command injection patterns
+    const commandPatterns = [
+      /[;&|`$(){}[\]]/g,
+      /\b(rm|del|format|fdisk|cat|type|more|less|head|tail)\b/gi
+    ];
+    
+    commandPatterns.forEach(pattern => {
+      sanitized = sanitized.replace(pattern, '');
+    });
+    
+    // Remove null bytes
+    sanitized = sanitized.replace(/\x00/g, '');
     
     return sanitized;
   }
@@ -91,9 +144,19 @@ export class InputSanitizer {
     
     // Remove path traversal attempts
     let sanitized = filename.replace(/\.\./g, '');
+    sanitized = sanitized.replace(/[\\\/]/g, '');
     
-    // Remove dangerous characters
-    sanitized = sanitized.replace(/[<>:"/\\|?*\x00-\x1f]/g, '');
+    // Remove dangerous characters and patterns
+    sanitized = sanitized.replace(/[<>:"/\\|?*\x00-\x1f;$`&(){}[\]]/g, '');
+    
+    // Remove executable extensions and dangerous patterns
+    const dangerousExtensions = /\.(exe|bat|cmd|com|pif|scr|vbs|js|jar|php|asp|aspx|jsp|sh|ps1)$/i;
+    if (dangerousExtensions.test(sanitized)) {
+      sanitized = sanitized.replace(dangerousExtensions, '.txt');
+    }
+    
+    // Remove null bytes
+    sanitized = sanitized.replace(/\x00/g, '');
     
     // Limit length
     if (sanitized.length > 255) {

@@ -18,10 +18,24 @@ export default defineConfig({
     },
     setupNodeEvents(on, config) {
       // Visual regression testing plugin
-      require('cypress-visual-regression/dist/plugin')(on, config);
+      try {
+        const visualRegression = require('cypress-visual-regression/dist/plugin');
+        if (typeof visualRegression === 'function') {
+          visualRegression(on, config);
+        }
+      } catch (error) {
+        console.log('Visual regression plugin not available:', error.message);
+      }
       
       // Code coverage plugin
-      require('@cypress/code-coverage/task')(on, config);
+      try {
+        const codeCoverage = require('@cypress/code-coverage/task');
+        if (typeof codeCoverage === 'function') {
+          codeCoverage(on, config);
+        }
+      } catch (error) {
+        console.log('Code coverage plugin not available:', error.message);
+      }
       
       // Performance testing plugin
       on('before:browser:launch', (browser, launchOptions) => {

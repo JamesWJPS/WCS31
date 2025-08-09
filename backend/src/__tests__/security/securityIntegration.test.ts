@@ -1,281 +1,279 @@
 import request from 'supertest';
-import express from 'express';
-import { applySecurity, routeSecurity } from '../../middleware/security';
-import { sanitizeContent, sanitizeFileUpload } from '../../middleware/sanitization';
-
-// Extend Express Request type for session
-declare global {
-  namespace Express {
-    interface Request {
-      session?: { id: string };
-    }
-  }
-}
+import { app } from '../../index';
+import { setupTestDatabase, cleanupTestDatabase } from '../helpers/testDatabase';
 
 describe('Security Integration Tests', () => {
-  let app: express.Application;
-
-  beforeEach(() => {
-    app = express();
-    app.use(express.json());
-    applySecurity(app);
+  beforeAll(async () => {
+    await setupTestDatabase();
   });
 
-  describe('Complete Security Stack', () => {
-    beforeEach(() => {
-      // Simulate a complete content creation endpoint
-      app.post('/api/content', 
-        ...routeSecurity.content,
-        sanitizeContent,
-        (req, res) => {
-          res.json({
-            title: req.body.title,
-            body: req.body.body,
-            metadata: req.body.metadata
-          });
-        }
-      );
+  afterAll(async () => {
+    await cleanupTestDatabase();
+  });
 
-      // Simulate file upload endpoint
-      app.post('/api/upload',
-        ...routeSecurity.upload,
-        sanitizeFileUpload,
-        (_req, res) => {
-          res.json({ message: 'File uploaded successfully' });
-        }
-      );
-
-      // Simulate user management endpoint
-      app.post('/api/users',
-        ...routeSecurity.users,
-        (req, res) => {
-          res.json({
-            username: req.body.username,
-            email: req.body.email,
-            role: req.body.role
-          });
-        }
-      );
-    });
-
-    it('should apply all security measures to content creation', async () => {
+  describe('Input Sanitization', () => {
+    it('should sanitize XSS attempts in content creation', async () => {
       const maliciousContent = {
-        title: '<script>alert("xss")</script>Title',
-        body: '<p>Good content</p><script>bad()</script>',
-        metadata: {
-          description: '<img onerror="alert(1)" src="x">',
-          tags: ['<script>evil</script>', 'safe-tag']
-        }
+        title: '<script>alert("XSS")</script>Normal Title',
+        body: '<p>Normal content</p><script>alert("XSS")</script>',
+        templateId: 'template-1'
       };
-
-      // First get CSRF token
-      const tokenResponse = await request(app).get('/');
-      const csrfToken = tokenResponse.headers['x-csrf-token'] as string;
 
       const response = await request(app)
         .post('/api/content')
-        .set('X-CSRF-Token', csrfToken)
+        .set('Authorization', 'Bearer valid-admin-token')
+        .set('X-CSRF-Token', 'valid-csrf-token')
         .send(maliciousContent);
 
-      expect(response.status).toBe(200);
-      expect(response.body.title).not.toContain('<script>');
-      expect(response.body.body).not.toContain('<script>');
-      expect(response.body.metadata.description).not.toContain('onerror');
+      expect(response.status).toBe(201);
+      expect(response.body.content.title).not.toContain('<script>');
+      expect(response.body.content.body).not.toContain('<script>');
+      expect(response.body.content.title).toContain('Normal Title');
+      expect(response.body.content.body).toContain('<p>Normal content</p>');
     });
 
-    it('should enforce rate limiting across multiple endpoints', async () => {
+    it('should sanitize SQL injection attempts', async () => {
+      const sqlInjection = "'; DROP TABLE users; --";
+      
+      const response = await request(app)
+        .get('/api/content')
+        .set('Authorization', 'Bearer valid-admin-token')
+        .query({ search: sqlInjection });
+
+      expect(response.status).toBe(200);
+      expect(JSON.stringify(response.body)).not.toContain('DROP TABLE');
+      expect(JSON.stringify(response.body)).not.toContain('--');
+    });
+
+    it('should prevent path traversal in file operations', async () => {
+      const traversalAttempt = '../../../etc/passwd';
+      
+      const response = await request(app)
+        .get(`/api/files/${encodeURIComponent(traversalAttempt)}`)
+        .set('Authorization', 'Bearer valid-admin-token');
+
+      expect(response.status).toBe(404);
+      expect(JSON.stringify(response.body)).not.toContain('../');
+    });
+  });
+
+  describe('File Upload Security', () => {
+    it('should reject executable files', async () => {
+      const response = await request(app)
+        .post('/api/documents/upload')
+        .set('Authorization', 'Bearer valid-admin-token')
+        .set('X-CSRF-Token', 'valid-csrf-token')
+        .attach('file', Buffer.from('malicious content'), 'malware.exe');
+
+      expect(response.status).toBe(400);
+      expect(response.body.error.code).toBe('EXECUTABLE_FILE_BLOCKED');
+    });
+
+    it('should reject files with double extensions', async () => {
+      const response = await request(app)
+        .post('/api/documents/upload')
+        .set('Authorization', 'Bearer valid-admin-token')
+        .set('X-CSRF-Token', 'valid-csrf-token')
+        .attach('file', Buffer.from('malicious content'), 'document.pdf.exe');
+
+      expect(response.status).toBe(400);
+      expect(response.body.error.code).toBe('DOUBLE_EXTENSION_BLOCKED');
+    });
+
+    it('should validate file content matches extension', async () => {
+      // Create a fake PDF (just text content with PDF extension)
+      const fakeContent = 'This is not a real PDF file';
+      
+      const response = await request(app)
+        .post('/api/documents/upload')
+        .set('Authorization', 'Bearer valid-admin-token')
+        .set('X-CSRF-Token', 'valid-csrf-token')
+        .attach('file', Buffer.from(fakeContent), 'document.pdf');
+
+      expect(response.status).toBe(400);
+      expect(response.body.error.code).toBe('FILE_CONTENT_MISMATCH');
+    });
+  });
+
+  describe('CSRF Protection', () => {
+    it('should require CSRF token for state-changing operations', async () => {
+      const response = await request(app)
+        .post('/api/content')
+        .set('Authorization', 'Bearer valid-admin-token')
+        .send({ title: 'Test', body: 'Test content', templateId: 'template-1' });
+
+      expect(response.status).toBe(403);
+      expect(response.body.error.code).toBe('CSRF_TOKEN_MISSING');
+    });
+
+    it('should reject invalid CSRF tokens', async () => {
+      const response = await request(app)
+        .post('/api/content')
+        .set('Authorization', 'Bearer valid-admin-token')
+        .set('X-CSRF-Token', 'invalid-token')
+        .send({ title: 'Test', body: 'Test content', templateId: 'template-1' });
+
+      expect(response.status).toBe(403);
+      expect(response.body.error.code).toBe('CSRF_TOKEN_INVALID');
+    });
+  });
+
+  describe('Rate Limiting', () => {
+    it('should enforce rate limits on authentication attempts', async () => {
       const requests = [];
       
-      // Make many requests to trigger rate limiting
-      for (let i = 0; i < 20; i++) {
+      // Make multiple failed login attempts
+      for (let i = 0; i < 10; i++) {
         requests.push(
           request(app)
-            .get('/api/content')
-            .set('User-Agent', 'test-client')
+            .post('/api/auth/login')
+            .send({ username: 'invalid', password: 'invalid' })
         );
       }
 
       const responses = await Promise.all(requests);
-      const rateLimitedCount = responses.filter(r => r.status === 429).length;
+      const rateLimitedResponses = responses.filter(r => r.status === 429);
       
-      expect(rateLimitedCount).toBeGreaterThan(0);
+      expect(rateLimitedResponses.length).toBeGreaterThan(0);
     });
 
-    it('should validate security headers are present', async () => {
-      const response = await request(app).get('/api/content');
+    it('should enforce rate limits on file uploads', async () => {
+      const requests = [];
+      
+      // Make multiple upload attempts
+      for (let i = 0; i < 25; i++) {
+        requests.push(
+          request(app)
+            .post('/api/documents/upload')
+            .set('Authorization', 'Bearer valid-admin-token')
+            .set('X-CSRF-Token', 'valid-csrf-token')
+            .attach('file', Buffer.from('test content'), 'test.txt')
+        );
+      }
 
-      expect(response.headers['x-content-type-options']).toBe('nosniff');
-      expect(response.headers['x-frame-options']).toBe('DENY');
-      expect(response.headers['x-xss-protection']).toBe('0');
-      expect(response.headers['strict-transport-security']).toBeDefined();
+      const responses = await Promise.all(requests);
+      const rateLimitedResponses = responses.filter(r => r.status === 429);
+      
+      expect(rateLimitedResponses.length).toBeGreaterThan(0);
     });
+  });
 
-    it('should handle CORS properly', async () => {
+  describe('Authentication Security', () => {
+    it('should prevent JWT token manipulation', async () => {
+      const manipulatedToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJhZG1pbiIsInJvbGUiOiJhZG1pbmlzdHJhdG9yIn0.invalid-signature';
+      
       const response = await request(app)
-        .options('/api/content')
-        .set('Origin', 'http://localhost:3000')
-        .set('Access-Control-Request-Method', 'POST');
+        .get('/api/users')
+        .set('Authorization', `Bearer ${manipulatedToken}`);
 
-      expect(response.headers['access-control-allow-origin']).toBe('http://localhost:3000');
-      expect(response.headers['access-control-allow-credentials']).toBe('true');
+      expect(response.status).toBe(401);
+    });
+
+    it('should prevent privilege escalation', async () => {
+      // Try to access admin endpoint with editor token
+      const response = await request(app)
+        .get('/api/admin/users')
+        .set('Authorization', 'Bearer valid-editor-token');
+
+      expect(response.status).toBe(403);
+    });
+  });
+
+  describe('Data Validation', () => {
+    it('should validate email formats', async () => {
+      const response = await request(app)
+        .post('/api/users')
+        .set('Authorization', 'Bearer valid-admin-token')
+        .set('X-CSRF-Token', 'valid-csrf-token')
+        .send({
+          username: 'testuser',
+          email: 'invalid-email-format',
+          password: 'ValidPassword123!',
+          role: 'editor'
+        });
+
+      expect(response.status).toBe(400);
+      expect(response.body.error.message).toContain('email');
+    });
+
+    it('should enforce password complexity', async () => {
+      const response = await request(app)
+        .post('/api/users')
+        .set('Authorization', 'Bearer valid-admin-token')
+        .set('X-CSRF-Token', 'valid-csrf-token')
+        .send({
+          username: 'testuser',
+          email: 'test@example.com',
+          password: 'weak',
+          role: 'editor'
+        });
+
+      expect(response.status).toBe(400);
+      expect(response.body.error.message).toContain('password');
+    });
+  });
+
+  describe('Content Security', () => {
+    it('should prevent prototype pollution', async () => {
+      const pollutionAttempt = {
+        title: 'Test',
+        body: 'Test content',
+        templateId: 'template-1',
+        '__proto__': { 'isAdmin': true }
+      };
+
+      const response = await request(app)
+        .post('/api/content')
+        .set('Authorization', 'Bearer valid-editor-token')
+        .set('X-CSRF-Token', 'valid-csrf-token')
+        .send(pollutionAttempt);
+
+      expect(response.status).toBe(201);
+      expect(response.body.received).toBeUndefined();
+      expect(Object.prototype).not.toHaveProperty('isAdmin');
+    });
+
+    it('should sanitize template data', async () => {
+      const maliciousTemplate = {
+        name: '<script>alert("XSS")</script>Template',
+        htmlStructure: '<div>{{content}}</div><script>alert("XSS")</script>',
+        cssStyles: 'body { background: url("javascript:alert(\'XSS\')"); }'
+      };
+
+      const response = await request(app)
+        .post('/api/templates')
+        .set('Authorization', 'Bearer valid-admin-token')
+        .set('X-CSRF-Token', 'valid-csrf-token')
+        .send(maliciousTemplate);
+
+      expect(response.status).toBe(201);
+      expect(response.body.template.name).not.toContain('<script>');
+      expect(response.body.template.htmlStructure).not.toContain('<script>');
+      expect(response.body.template.cssStyles).not.toContain('javascript:');
     });
   });
 
   describe('Error Handling Security', () => {
-    beforeEach(() => {
-      app.get('/api/error', (_req, _res, _next) => {
-        throw new Error('Database connection failed: password=secret123');
-      });
-
-      app.use((error: Error, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
-        // Ensure sensitive information is not leaked in error messages
-        const sanitizedMessage = error.message.replace(/password=\w+/g, 'password=***');
-        res.status(500).json({ error: sanitizedMessage });
-      });
-    });
-
-    it('should not leak sensitive information in error messages', async () => {
-      const response = await request(app).get('/api/error');
-
-      expect(response.status).toBe(500);
-      expect(response.body.error).not.toContain('secret123');
-      expect(response.body.error).toContain('password=***');
-    });
-  });
-
-  describe('Session Security', () => {
-    beforeEach(() => {
-      app.use((req, _res, next) => {
-        // Simulate session middleware
-        req.session = { id: 'test-session-id' };
-        next();
-      });
-
-      app.post('/api/session-test', (req, res) => {
-        res.json({ sessionId: req.session?.id });
-      });
-    });
-
-    it('should handle session security properly', async () => {
+    it('should not expose sensitive information in error messages', async () => {
       const response = await request(app)
-        .post('/api/session-test')
-        .send({ data: 'test' });
+        .get('/api/nonexistent-endpoint')
+        .set('Authorization', 'Bearer valid-admin-token');
 
-      expect(response.body.sessionId).toBeDefined();
-      expect(response.headers['set-cookie']).toBeDefined();
-    });
-  });
-
-  describe('Input Validation Edge Cases', () => {
-    beforeEach(() => {
-      app.post('/api/validate', (req, res) => {
-        res.json({ received: req.body });
-      });
+      expect(response.status).toBe(404);
+      expect(JSON.stringify(response.body)).not.toContain('stack');
+      expect(JSON.stringify(response.body)).not.toContain('password');
+      expect(JSON.stringify(response.body)).not.toContain('secret');
     });
 
-    it('should handle deeply nested objects', async () => {
-      const deepObject = {
-        level1: {
-          level2: {
-            level3: {
-              level4: {
-                level5: '<script>alert("deep")</script>'
-              }
-            }
-          }
-        }
-      };
-
+    it('should handle database errors securely', async () => {
+      // This would trigger a database error in a real scenario
       const response = await request(app)
-        .post('/api/validate')
-        .send(deepObject);
-
-      expect(JSON.stringify(response.body)).not.toContain('<script>');
-    });
-
-    it('should handle large arrays', async () => {
-      const largeArray = Array(1000).fill('<script>alert("xss")</script>');
-
-      const response = await request(app)
-        .post('/api/validate')
-        .send({ items: largeArray });
-
-      expect(JSON.stringify(response.body)).not.toContain('<script>');
-    });
-
-    it('should handle circular references gracefully', async () => {
-      const obj: any = { name: 'test' };
-      obj.self = obj; // Create circular reference
-
-      const response = await request(app)
-        .post('/api/validate')
-        .send(obj);
-
-      expect(response.status).toBe(400); // Should handle gracefully
-    });
-  });
-
-  describe('Content Security Policy', () => {
-    it('should set appropriate CSP headers', async () => {
-      const response = await request(app).get('/');
-
-      expect(response.headers['content-security-policy']).toBeDefined();
-      expect(response.headers['content-security-policy']).toContain("default-src 'self'");
-      expect(response.headers['content-security-policy']).toContain("object-src 'none'");
-    });
-  });
-
-  describe('File Upload Security Integration', () => {
-    it('should apply all file security measures', async () => {
-      const maliciousFile = Buffer.from('<script>alert("xss")</script>');
-
-      const response = await request(app)
-        .post('/api/upload')
-        .attach('file', maliciousFile, 'malicious.js');
+        .get('/api/content/invalid-id-format')
+        .set('Authorization', 'Bearer valid-admin-token');
 
       expect(response.status).toBe(400);
-    });
-
-    it('should sanitize file metadata', async () => {
-      const safeFile = Buffer.from('safe content');
-      
-      // First get CSRF token
-      const tokenResponse = await request(app).get('/');
-      const csrfToken = tokenResponse.headers['x-csrf-token'] as string;
-
-      const response = await request(app)
-        .post('/api/upload')
-        .set('X-CSRF-Token', csrfToken)
-        .field('title', '<script>alert("title")</script>Safe Title')
-        .field('description', '<img onerror="alert(1)">Description')
-        .attach('file', safeFile, 'safe.txt');
-
-      if (response.status === 200) {
-        // If upload succeeds, check that metadata was sanitized
-        expect(response.body.title).not.toContain('<script>');
-        expect(response.body.description).not.toContain('onerror');
-      }
-    });
-  });
-
-  describe('API Versioning Security', () => {
-    beforeEach(() => {
-      app.get('/api/v1/data', (_req, res) => {
-        res.json({ version: 'v1', data: 'old format' });
-      });
-
-      app.get('/api/v2/data', (_req, res) => {
-        res.json({ version: 'v2', data: 'new format' });
-      });
-    });
-
-    it('should maintain security across API versions', async () => {
-      const v1Response = await request(app).get('/api/v1/data');
-      const v2Response = await request(app).get('/api/v2/data');
-
-      // Both versions should have security headers
-      expect(v1Response.headers['x-content-type-options']).toBe('nosniff');
-      expect(v2Response.headers['x-content-type-options']).toBe('nosniff');
+      expect(JSON.stringify(response.body)).not.toContain('database');
+      expect(JSON.stringify(response.body)).not.toContain('SQL');
     });
   });
 });

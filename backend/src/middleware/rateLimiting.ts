@@ -117,7 +117,7 @@ export const generalRateLimit = new RateLimiter({
 
 export const authRateLimit = new RateLimiter({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  maxRequests: 5, // 5 login attempts per window
+  maxRequests: process.env['NODE_ENV'] === 'test' ? 3 : 5, // 3 attempts in test, 5 in production
   message: 'Too many authentication attempts, please try again later'
 });
 

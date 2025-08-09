@@ -237,12 +237,18 @@ export class FileValidator {
  * Express middleware for file validation
  */
 export const validateFileUpload = (options: FileValidationOptions = {}) => {
-  return (req: Request, _res: Response, next: NextFunction) => {
+  return (req: Request, res: Response, next: NextFunction) => {
     try {
       if (req.file) {
         const validation = FileValidator.validateFile(req.file, options);
         if (!validation.isValid) {
-          throw new AppError(`File validation failed: ${validation.errors.join(', ')}`, 400, 'FILE_VALIDATION_ERROR');
+          return res.status(400).json({
+            success: false,
+            error: {
+              code: 'FILE_VALIDATION_ERROR',
+              message: `File validation failed: ${validation.errors.join(', ')}`
+            }
+          });
         }
         
         // Update filename with sanitized version
@@ -254,7 +260,13 @@ export const validateFileUpload = (options: FileValidationOptions = {}) => {
       if (req.files && Array.isArray(req.files)) {
         const validation = FileValidator.validateFiles(req.files, options);
         if (!validation.isValid) {
-          throw new AppError(`File validation failed: ${validation.errors.join(', ')}`, 400, 'FILE_VALIDATION_ERROR');
+          return res.status(400).json({
+            success: false,
+            error: {
+              code: 'FILE_VALIDATION_ERROR',
+              message: `File validation failed: ${validation.errors.join(', ')}`
+            }
+          });
         }
       }
 

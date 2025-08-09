@@ -416,7 +416,7 @@ const main = async (): Promise<void> => {
 };
 
 // Run the script
-if (require.main === module) {
+if (import.meta.url === `file://${process.argv[1]}`) {
   main().catch(error => {
     console.error('Error running accessibility tests:', error);
     process.exit(1);

@@ -1,6 +1,4 @@
 import express from 'express';
-import cors from 'cors';
-import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import dotenv from 'dotenv';
 import { authRoutes, userRoutes, contentRoutes, fileRoutes, documentRoutes, folderRoutes, publicRoutes, adminRoutes } from './routes';
@@ -35,7 +33,7 @@ applySecurity(app);
 // Rate limiting
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: process.env.NODE_ENV === 'production' ? 100 : 1000, // Limit each IP
+  max: process.env['NODE_ENV'] === 'production' ? 100 : 1000, // Limit each IP
   message: {
     success: false,
     error: {
@@ -72,11 +70,12 @@ app.use(timeoutHandler(30000)); // 30 seconds
 // Body parsing middleware with error handling
 app.use(express.json({ 
   limit: '10mb',
-  verify: (req, res, buf) => {
+  verify: (_req, res, buf) => {  // Use underscore prefix to indicate intentionally unused parameter
     try {
       JSON.parse(buf.toString());
     } catch (e) {
-      res.status(400).json({
+      // Cast res to Express Response type to access status method
+      (res as express.Response).status(400).json({
         success: false,
         error: {
           code: 'INVALID_JSON',
@@ -151,7 +150,7 @@ async function startServer() {
     
     const server = app.listen(PORT, () => {
       console.log(`Web Communication CMS Backend running on port ${PORT}`);
-      console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
+      console.log(`Environment: ${process.env['NODE_ENV'] || 'development'}`);
       console.log(`Health check available at http://localhost:${PORT}/health`);
     });
 

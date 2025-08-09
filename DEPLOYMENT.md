@@ -333,6 +333,85 @@ For deployment issues:
 4. Review this documentation
 5. Check GitHub issues
 
+## Final Integration Testing
+
+### Pre-Deployment Testing
+
+Before deploying to production, run the comprehensive test suite:
+
+```bash
+# Run all integration tests
+node scripts/integration-test.js
+
+# Run performance optimization analysis
+node scripts/performance-optimization.js
+
+# Run security audit
+npm audit --audit-level moderate
+
+# Run accessibility tests
+npm run test:accessibility --workspace=frontend
+
+# Run end-to-end tests
+npm run test:e2e:headless
+```
+
+### Post-Deployment Verification
+
+After deployment, verify system functionality:
+
+1. **Health Checks**
+   ```bash
+   curl https://your-domain.com/api/health
+   curl https://your-domain.com/api/auth/status
+   ```
+
+2. **Functionality Tests**
+   - Test user login/logout
+   - Create and publish content
+   - Upload and access documents
+   - Verify accessibility compliance
+   - Test all user roles and permissions
+
+3. **Performance Tests**
+   - Page load times < 3 seconds
+   - API response times < 500ms
+   - File upload performance
+   - Database query performance
+
+4. **Security Tests**
+   - SSL certificate validation
+   - Security headers verification
+   - CSRF protection testing
+   - Rate limiting verification
+
+### Automated Testing Pipeline
+
+Set up automated testing in your CI/CD pipeline:
+
+```yaml
+# Example GitHub Actions workflow
+name: Integration Tests
+on: [push, pull_request]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Setup Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: '18'
+      - name: Install dependencies
+        run: npm ci
+      - name: Run integration tests
+        run: node scripts/integration-test.js
+      - name: Run security audit
+        run: npm audit --audit-level moderate
+      - name: Run accessibility tests
+        run: npm run test:accessibility --workspace=frontend
+```
+
 ## Default Credentials
 
 After seeding the database:
