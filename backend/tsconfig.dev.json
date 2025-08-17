@@ -1,0 +1,13 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
+    "exactOptionalPropertyTypes": false,
+    "strict": false
+  },
+  "ts-node": {
+    "files": true,
+    "transpileOnly": true
+  }
+}

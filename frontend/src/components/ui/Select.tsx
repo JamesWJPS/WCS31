@@ -1,13 +1,11 @@
-import React, { SelectHTMLAttributes, forwardRef } from 'react';
-import './Select.css';
+import React from 'react';
 
 interface SelectOption {
   value: string;
   label: string;
-  disabled?: boolean;
 }
 
-interface SelectProps extends SelectHTMLAttributes<HTMLSelectElement> {
+interface SelectProps extends React.SelectHTMLAttributes<HTMLSelectElement> {
   label?: string;
   error?: string;
   helperText?: string;
@@ -15,7 +13,7 @@ interface SelectProps extends SelectHTMLAttributes<HTMLSelectElement> {
   placeholder?: string;
 }
 
-const Select = forwardRef<HTMLSelectElement, SelectProps>(({
+export const Select: React.FC<SelectProps> = ({
   label,
   error,
   helperText,
@@ -24,34 +22,26 @@ const Select = forwardRef<HTMLSelectElement, SelectProps>(({
   className = '',
   id,
   ...props
-}, ref) => {
+}) => {
   const selectId = id || `select-${Math.random().toString(36).substr(2, 9)}`;
-  const hasError = Boolean(error);
   
-  const selectClass = [
-    'select',
-    hasError ? 'select-error' : '',
-    className
-  ].filter(Boolean).join(' ');
-
+  const selectClasses = `
+    block w-full px-3 py-2 border rounded-md shadow-sm 
+    focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm
+    ${error ? 'border-red-300 text-red-900' : 'border-gray-300'}
+    ${className}
+  `;
+  
   return (
-    <div className="select-group">
+    <div>
       {label && (
-        <label htmlFor={selectId} className="select-label">
+        <label htmlFor={selectId} className="block text-sm font-medium text-gray-700 mb-1">
           {label}
         </label>
       )}
-      
       <select
-        ref={ref}
         id={selectId}
-        className={selectClass}
-        aria-invalid={hasError}
-        aria-describedby={
-          error ? `${selectId}-error` : 
-          helperText ? `${selectId}-helper` : 
-          undefined
-        }
+        className={selectClasses}
         {...props}
       >
         {placeholder && (
@@ -60,31 +50,21 @@ const Select = forwardRef<HTMLSelectElement, SelectProps>(({
           </option>
         )}
         {options.map((option) => (
-          <option 
-            key={option.value} 
-            value={option.value}
-            disabled={option.disabled}
-          >
+          <option key={option.value} value={option.value}>
             {option.label}
           </option>
         ))}
       </select>
-      
       {error && (
-        <div id={`${selectId}-error`} className="select-error-text" role="alert">
+        <p className="mt-1 text-sm text-red-600" role="alert">
           {error}
-        </div>
+        </p>
       )}
-      
       {helperText && !error && (
-        <div id={`${selectId}-helper`} className="select-helper-text">
+        <p className="mt-1 text-sm text-gray-500">
           {helperText}
-        </div>
+        </p>
       )}
     </div>
   );
-});
-
-Select.displayName = 'Select';
-
-export default Select;
+};

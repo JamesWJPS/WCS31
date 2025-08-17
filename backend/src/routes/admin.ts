@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { AdminController } from '../controllers/AdminController';
-import { auth } from '../middleware/auth';
+import { authenticateToken } from '../middleware/auth';
 import { requireRole } from '../middleware/decorators';
 
 const router = Router();
@@ -28,7 +28,7 @@ const requireDeveloper = (req: any, res: any, next: any) => {
 };
 
 // Apply authentication and developer access to all admin routes
-router.use(auth);
+router.use(authenticateToken);
 router.use(requireDeveloper);
 
 /**

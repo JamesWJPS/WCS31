@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { User } from '../../types';
-import { useAuth } from '../../hooks/useAuth';
+import { useAuth } from '../../contexts/AuthContext';
 import UserList from '../../components/users/UserList';
 import UserForm from '../../components/users/UserForm';
 import './UsersPage.css';

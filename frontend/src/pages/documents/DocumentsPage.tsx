@@ -1,6 +1,6 @@
 import React from 'react';
 import DocumentManagement from '../../components/documents/DocumentManagement';
-import { useAuth } from '../../hooks/useAuth';
+import { useAuth } from '../../contexts/AuthContext';
 import './DocumentsPage.css';
 
 const DocumentsPage: React.FC = () => {

@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Drag & Drop Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background-color: #f8f9fa;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .content-item {
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            margin: 4px 0;
+            background: white;
+            transition: all 0.2s ease;
+        }
+        .content-item:hover {
+            background-color: #f8f9fa;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .content-item.dragging {
+            opacity: 0.5;
+            transform: rotate(2deg);
+        }
+        .content-item.drag-over {
+            border-color: #0d6efd;
+            background-color: #e7f3ff;
+        }
+        .item-content {
+            padding: 15px;
+            cursor: move;
+            display: flex;
+            align-items: center;
+        }
+        .drag-handle {
+            margin-right: 10px;
+            color: #6c757d;
+        }
+        .drop-zone {
+            height: 30px;
+            margin: 4px 0;
+            border: 2px dashed #0d6efd;
+            border-radius: 6px;
+            background-color: rgba(13, 110, 253, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0.7;
+            transition: all 0.2s ease;
+        }
+        .drop-zone:hover {
+            opacity: 1;
+            background-color: rgba(13, 110, 253, 0.2);
+        }
+        .drop-indicator {
+            color: #0d6efd;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .nested {
+            margin-left: 30px;
+            border-left: 3px solid #dee2e6;
+        }
+        .log {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 10px;
+            margin-top: 20px;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>🧪 Drag & Drop Test</h2>
+        <p>This is a simplified test of the drag-and-drop functionality. Try dragging items around!</p>
+        
+        <div id="content-list">
+            <div class="content-item" draggable="true" data-id="item1">
+                <div class="item-content">
+                    <span class="drag-handle">⋮⋮</span>
+                    <strong>Welcome Page</strong>
+                    <span style="margin-left: auto; font-size: 12px; color: #6c757d;">Order: 1</span>
+                </div>
+            </div>
+            
+            <div class="content-item" draggable="true" data-id="item2">
+                <div class="item-content">
+                    <span class="drag-handle">⋮⋮</span>
+                    <strong>Services</strong>
+                    <span style="margin-left: auto; font-size: 12px; color: #6c757d;">Order: 2</span>
+                </div>
+            </div>
+            
+            <div class="nested">
+                <div class="content-item" draggable="true" data-id="item3">
+                    <div class="item-content">
+                        <span class="drag-handle">⋮⋮</span>
+                        <strong>Waste Management</strong>
+                        <span style="margin-left: auto; font-size: 12px; color: #6c757d;">Order: 1</span>
+                    </div>
+                </div>
+                
+                <div class="content-item" draggable="true" data-id="item4">
+                    <div class="item-content">
+                        <span class="drag-handle">⋮⋮</span>
+                        <strong>Planning Applications</strong>
+                        <span style="margin-left: auto; font-size: 12px; color: #6c757d;">Order: 2</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="content-item" draggable="true" data-id="item5">
+                <div class="item-content">
+                    <span class="drag-handle">⋮⋮</span>
+                    <strong>Contact Information</strong>
+                    <span style="margin-left: auto; font-size: 12px; color: #6c757d;">Order: 3</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="log" id="log">
+            <strong>Drag & Drop Log:</strong><br>
+            Ready to test drag and drop...
+        </div>
+    </div>
+
+    <script>
+        let draggedElement = null;
+        const log = document.getElementById('log');
+        
+        function addLog(message) {
+            log.innerHTML += '<br>' + new Date().toLocaleTimeString() + ': ' + message;
+            log.scrollTop = log.scrollHeight;
+        }
+        
+        // Add event listeners to all draggable items
+        document.querySelectorAll('.content-item[draggable="true"]').forEach(item => {
+            item.addEventListener('dragstart', (e) => {
+                draggedElement = e.target;
+                e.target.classList.add('dragging');
+                addLog(`🎯 Started dragging: ${e.target.querySelector('strong').textContent}`);
+                
+                // Create drop zones
+                createDropZones();
+            });
+            
+            item.addEventListener('dragend', (e) => {
+                e.target.classList.remove('dragging');
+                removeDropZones();
+                draggedElement = null;
+                addLog(`✅ Finished dragging`);
+            });
+            
+            item.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                e.target.closest('.content-item').classList.add('drag-over');
+            });
+            
+            item.addEventListener('dragleave', (e) => {
+                e.target.closest('.content-item').classList.remove('drag-over');
+            });
+            
+            item.addEventListener('drop', (e) => {
+                e.preventDefault();
+                e.target.closest('.content-item').classList.remove('drag-over');
+                
+                if (draggedElement && draggedElement !== e.target.closest('.content-item')) {
+                    const draggedTitle = draggedElement.querySelector('strong').textContent;
+                    const targetTitle = e.target.closest('.content-item').querySelector('strong').textContent;
+                    addLog(`📦 Dropped "${draggedTitle}" on "${targetTitle}"`);
+                }
+            });
+        });
+        
+        function createDropZones() {
+            const items = document.querySelectorAll('.content-item');
+            items.forEach((item, index) => {
+                // Add drop zone before each item
+                const dropZoneBefore = document.createElement('div');
+                dropZoneBefore.className = 'drop-zone drop-zone-before';
+                dropZoneBefore.innerHTML = '<div class="drop-indicator">Drop here to place before</div>';
+                
+                dropZoneBefore.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    e.target.closest('.drop-zone').style.opacity = '1';
+                });
+                
+                dropZoneBefore.addEventListener('dragleave', (e) => {
+                    e.target.closest('.drop-zone').style.opacity = '0.7';
+                });
+                
+                dropZoneBefore.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    if (draggedElement) {
+                        const draggedTitle = draggedElement.querySelector('strong').textContent;
+                        const targetTitle = item.querySelector('strong').textContent;
+                        addLog(`⬆️ Dropped "${draggedTitle}" BEFORE "${targetTitle}"`);
+                    }
+                });
+                
+                item.parentNode.insertBefore(dropZoneBefore, item);
+            });
+        }
+        
+        function removeDropZones() {
+            document.querySelectorAll('.drop-zone').forEach(zone => {
+                zone.remove();
+            });
+        }
+        
+        addLog('🚀 Drag & Drop test initialized');
+        addLog('💡 Try dragging the items around to test the functionality');
+    </script>
+</body>
+</html>

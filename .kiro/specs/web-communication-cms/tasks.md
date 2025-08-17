@@ -378,7 +378,9 @@
   - Commit to GIT
   - _Requirements: 1.1, 2.1, 3.1, 4.1, 8.1_
 
-- [-] 25. Final integration and system testing
+- [x] 25. Final integration and system testing
+
+
 
 
 

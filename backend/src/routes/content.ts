@@ -1,10 +1,9 @@
 import { Router } from 'express';
 import { ContentController } from '../controllers/ContentController';
-import { authenticateToken, AuthenticatedRequest } from '../middleware/auth';
+import { authenticateToken } from '../middleware/auth';
 import { requireRole } from '../middleware/decorators';
 import { routeSecurity } from '../middleware/security';
 import { sanitizeContent } from '../middleware/sanitization';
-import { Response } from 'express';
 
 const router = Router();
 const contentController = new ContentController();

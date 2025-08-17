@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { ContentListItem, ContentFilter, Template } from '../../types';
 import { contentService } from '../../services/contentService';
-import { useAuth } from '../../hooks/useAuth';
+import { useAuth } from '../../contexts/AuthContext';
 import { 
   Button, 
   Input, 

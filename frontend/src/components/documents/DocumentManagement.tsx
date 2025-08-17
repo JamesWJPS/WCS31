@@ -5,7 +5,7 @@ import FileUpload from './FileUpload';
 import FolderTree from './FolderTree';
 import DocumentList from './DocumentList';
 import FolderPermissions from './FolderPermissions';
-import { useAuth } from '../../hooks/useAuth';
+import { useAuth } from '../../contexts/AuthContext';
 import { folderService } from '../../services';
 import { Folder, Document } from '../../types';
 import './DocumentManagement.css';

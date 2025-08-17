@@ -2,6 +2,13 @@ import { Request, Response, NextFunction } from 'express';
 import crypto from 'crypto';
 import { AppError } from '../utils/AppError';
 
+// Extend Request interface to include session
+interface RequestWithSession extends Request {
+  session?: {
+    id?: string;
+  };
+}
+
 interface CSRFOptions {
   secret?: string;
   tokenLength?: number;
@@ -79,7 +86,7 @@ export class CSRFProtection {
    * Middleware to generate and set CSRF token
    */
   generateMiddleware() {
-    return (req: Request, res: Response, next: NextFunction) => {
+    return (req: RequestWithSession, res: Response, next: NextFunction) => {
       // Get or create session ID
       const sessionId = req.session?.id || req.headers['x-session-id'] as string || 'anonymous';
       
@@ -106,7 +113,7 @@ export class CSRFProtection {
    * Middleware to verify CSRF token
    */
   verifyMiddleware() {
-    return (req: Request, _res: Response, next: NextFunction) => {
+    return (req: RequestWithSession, _res: Response, next: NextFunction) => {
       // Skip verification for safe methods
       if (this.ignoreMethods.has(req.method)) {
         return next();

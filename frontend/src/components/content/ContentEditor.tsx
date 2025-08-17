@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Content, ContentFormData, Template } from '../../types';
 import { contentService } from '../../services/contentService';
-import { useAuth } from '../../hooks/useAuth';
+import { useAuth } from '../../contexts/AuthContext';
 import { 
   Form, 
   FormField, 

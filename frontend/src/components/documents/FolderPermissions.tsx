@@ -6,7 +6,7 @@ import LoadingSpinner from '../ui/LoadingSpinner';
 import ErrorMessage from '../ui/ErrorMessage';
 import Modal from '../ui/Modal';
 import { folderService } from '../../services';
-import { useAuth } from '../../hooks/useAuth';
+import { useAuth } from '../../contexts/AuthContext';
 import { Folder, User } from '../../types';
 import './FolderPermissions.css';
 
