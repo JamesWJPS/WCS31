@@ -1,5 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
+import DashboardPage from './pages/dashboard/DashboardPage';
+import PageMenuSidebar from './components/layout/PageMenuSidebar';
+import { ContentItem } from './types';
+import { useRealTimeContent } from './hooks/useRealTimeContent';
+import { ContentUpdateEvent } from './services/realTimeContentService';
 
 // Drag and Drop Menu Organizer Component
 const MenuOrganizer: React.FC<{
@@ -352,61 +357,123 @@ const MenuOrganizer: React.FC<{
 
 // Public Content Display Component
 const PublicContentDisplay: React.FC = () => {
-  const [contents, setContents] = useState<any[]>([]);
   const [selectedContent, setSelectedContent] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
+  const [selectedContentDetails, setSelectedContentDetails] = useState<any>(null);
+  const [loadingContentDetails, setLoadingContentDetails] = useState(false);
 
-  useEffect(() => {
-    loadPublicContent();
-    // Check for URL hash to load specific content
-    const hash = window.location.hash.substring(1);
-    if (hash) {
-      loadContentByIdentifier(hash);
+  // Use real-time content hook for public content
+  const {
+    contents,
+    loading,
+    error: contentError,
+    lastUpdate,
+    isMonitoring
+  } = useRealTimeContent({
+    autoStart: true,
+    pollingInterval: 10000, // Longer interval for public users
+    onContentUpdate: handleContentUpdate
+  });
+
+  // Handle content updates from real-time service
+  function handleContentUpdate(event: ContentUpdateEvent) {
+    console.log('Public content update received:', event);
+    
+    // If the currently selected content was updated, refresh its details
+    if (selectedContent && event.contentId === selectedContent.id && event.type === 'updated') {
+      loadContentDetails(selectedContent.id);
     }
-  }, []);
+    
+    // If the currently selected content was deleted, clear selection
+    if (selectedContent && event.contentId === selectedContent.id && event.type === 'deleted') {
+      setSelectedContent(null);
+      setSelectedContentDetails(null);
+      window.location.hash = '';
+    }
+  }
+
+  // Convert to ContentItem format for PageMenuSidebar
+  const contentItems: ContentItem[] = contents
+    .filter(item => item.status === 'published' && item.show_in_menu) // Only show published content in menu
+    .map(item => ({
+      id: item.id,
+      title: item.title,
+      ...(item.slug && { slug: item.slug }),
+      ...(item.menu_title && { menu_title: item.menu_title }),
+      ...(item.parent_id !== undefined && { parent_id: item.parent_id }),
+      ...(item.menu_order !== undefined && { menu_order: item.menu_order }),
+      ...(item.show_in_menu !== undefined && { show_in_menu: item.show_in_menu }),
+      ...(item.status && { status: item.status }),
+      ...(item.updatedAt && { updated_at: item.updatedAt })
+    }));
+
+  // Load content details for a specific content ID
+  const loadContentDetails = async (contentId: string) => {
+    try {
+      setLoadingContentDetails(true);
+      const response = await fetch(`http://localhost:3001/api/content/${contentId}`);
+      const result = await response.json();
+      if (result.success) {
+        setSelectedContentDetails(result.data);
+      } else {
+        console.error('Content not found:', contentId);
+        setSelectedContentDetails(null);
+      }
+    } catch (error) {
+      console.error('Failed to load content details:', error);
+      setSelectedContentDetails(null);
+    } finally {
+      setLoadingContentDetails(false);
+    }
+  };
+
+  // Check for URL hash to load specific content after contents are loaded
+  useEffect(() => {
+    if (contentItems.length > 0) {
+      const hash = window.location.hash.substring(1);
+      if (hash) {
+        loadContentByIdentifier(hash);
+      } else if (!selectedContent) {
+        // Auto-select the first content if available and no hash
+        const firstContent = contentItems[0];
+        if (firstContent) {
+          setSelectedContent(firstContent);
+          loadContentDetails(firstContent.id);
+        }
+      }
+    }
+  }, [contentItems]);
 
   // Listen for hash changes
   useEffect(() => {
     const handleHashChange = () => {
       const hash = window.location.hash.substring(1);
-      if (hash) {
+      if (hash && contentItems.length > 0) {
         loadContentByIdentifier(hash);
       }
     };
 
     window.addEventListener('hashchange', handleHashChange);
     return () => window.removeEventListener('hashchange', handleHashChange);
-  }, []);
-
-  const loadPublicContent = async () => {
-    try {
-      const response = await fetch('http://localhost:3001/api/content?public_only=true');
-      const result = await response.json();
-      if (result.success) {
-        setContents(result.data);
-        // Auto-select the first content if available and no hash
-        if (result.data.length > 0 && !selectedContent && !window.location.hash) {
-          setSelectedContent(result.data[0]);
-        }
-      }
-    } catch (error) {
-      console.error('Error loading public content:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  }, [contentItems]);
 
   const loadContentByIdentifier = async (identifier: string) => {
     try {
-      const response = await fetch(`http://localhost:3001/api/content/${identifier}`);
-      const result = await response.json();
-      if (result.success) {
-        setSelectedContent(result.data);
+      // First try to find by slug, then by ID
+      let targetContent = contentItems.find(c => c.slug === identifier);
+      if (!targetContent) {
+        targetContent = contentItems.find(c => c.id === identifier);
+      }
+      
+      if (targetContent) {
+        setSelectedContent(targetContent);
+        await loadContentDetails(targetContent.id);
       } else {
         console.error('Content not found:', identifier);
         // Fallback to first available content
-        if (contents.length > 0) {
-          setSelectedContent(contents[0]);
+        if (contentItems.length > 0) {
+          const firstContent = contentItems[0];
+          setSelectedContent(firstContent);
+          await loadContentDetails(firstContent.id);
           window.location.hash = '';
         }
       }
@@ -415,64 +482,10 @@ const PublicContentDisplay: React.FC = () => {
     }
   };
 
-  // Build nested menu structure
-  const buildMenuTree = (contents: any[]) => {
-    const tree: any[] = [];
-    const contentMap = new Map();
-    
-    // Create a map of all content items
-    contents.forEach(content => {
-      contentMap.set(content.id, { ...content, children: [] });
-    });
-    
-    // Build the tree structure
-    contents.forEach(content => {
-      const item = contentMap.get(content.id);
-      if (content.parent_id && contentMap.has(content.parent_id)) {
-        contentMap.get(content.parent_id).children.push(item);
-      } else {
-        tree.push(item);
-      }
-    });
-    
-    return tree;
-  };
-
-  const renderMenuItem = (item: any, level: number = 0) => {
-    const hasChildren = item.children && item.children.length > 0;
-    const displayTitle = item.menu_title || item.title;
-    
-    return (
-      <div key={item.id}>
-        <button
-          className={`list-group-item list-group-item-action ${
-            selectedContent?.id === item.id ? 'active' : ''
-          }`}
-          onClick={() => {
-            setSelectedContent(item);
-            window.location.hash = item.slug || item.id;
-          }}
-          style={{ paddingLeft: `${1 + level * 1.5}rem` }}
-        >
-          <div className="d-flex w-100 justify-content-between align-items-center">
-            <div>
-              {hasChildren && (
-                <i className="bi bi-folder me-2 text-muted"></i>
-              )}
-              <span>{displayTitle}</span>
-            </div>
-            <small className="text-muted">
-              {new Date(item.updated_at).toLocaleDateString()}
-            </small>
-          </div>
-        </button>
-        {hasChildren && (
-          <div>
-            {item.children.map((child: any) => renderMenuItem(child, level + 1))}
-          </div>
-        )}
-      </div>
-    );
+  const handlePageSelect = async (content: ContentItem) => {
+    setSelectedContent(content);
+    window.location.hash = content.slug || content.id;
+    await loadContentDetails(content.id);
   };
 
   if (loading) {
@@ -510,29 +523,16 @@ const PublicContentDisplay: React.FC = () => {
     <div className="row">
       {/* Content Navigation Sidebar */}
       <div className="col-md-3">
-        <div className="card">
-          <div className="card-header">
-            <h6 className="mb-0">
-              <i className="bi bi-list me-2"></i>
-              Pages
-            </h6>
-          </div>
-          <div className="list-group list-group-flush">
-            {buildMenuTree(contents).map((item) => renderMenuItem(item))}
-          </div>
-        </div>
-        
-        {/* Admin Login Link */}
-        <div className="card mt-3">
-          <div className="card-body text-center">
-            <small className="text-muted">
-              <i className="bi bi-shield-lock me-1"></i>
-              <a href="#" onClick={(e) => { e.preventDefault(); /* This will be handled by showing login form */ }} className="text-decoration-none">
-                Admin Login
-              </a>
-            </small>
-          </div>
-        </div>
+        <PageMenuSidebar
+          isAdminMode={false}
+          onPageSelect={handlePageSelect}
+          selectedContentId={selectedContent?.id}
+          showAdminControls={false}
+          contents={contentItems}
+          loading={loading}
+          lastUpdate={lastUpdate}
+          isRealTimeEnabled={isMonitoring}
+        />
       </div>
 
       {/* Main Content Area */}
@@ -544,7 +544,7 @@ const PublicContentDisplay: React.FC = () => {
                 <div>
                   <h3 className="mb-0">{selectedContent.title}</h3>
                   <small className="text-muted">
-                    Last updated: {new Date(selectedContent.updated_at).toLocaleDateString()}
+                    Last updated: {selectedContent.updated_at ? new Date(selectedContent.updated_at).toLocaleDateString() : 'Unknown'}
                   </small>
                 </div>
                 <div className="text-end">
@@ -556,14 +556,29 @@ const PublicContentDisplay: React.FC = () => {
               </div>
             </div>
             <div className="card-body">
-              <div 
-                className="content-display"
-                dangerouslySetInnerHTML={{ __html: selectedContent.body || '' }}
-                style={{
-                  lineHeight: '1.6',
-                  fontSize: '16px'
-                }}
-              />
+              {loadingContentDetails ? (
+                <div className="text-center py-4">
+                  <div className="spinner-border text-primary" role="status">
+                    <span className="visually-hidden">Loading content...</span>
+                  </div>
+                  <p className="mt-2">Loading content details...</p>
+                </div>
+              ) : selectedContentDetails ? (
+                <div 
+                  className="content-display"
+                  dangerouslySetInnerHTML={{ __html: selectedContentDetails.body || '' }}
+                  style={{
+                    lineHeight: '1.6',
+                    fontSize: '16px'
+                  }}
+                />
+              ) : (
+                <div className="text-center py-4">
+                  <i className="bi bi-exclamation-triangle fs-1 text-muted mb-3"></i>
+                  <h5>Content not available</h5>
+                  <p className="text-muted">Failed to load content details. Please try again.</p>
+                </div>
+              )}
             </div>
           </div>
         ) : (
@@ -572,6 +587,12 @@ const PublicContentDisplay: React.FC = () => {
               <i className="bi bi-arrow-left fs-1 text-muted mb-3"></i>
               <h5>Select a page to view</h5>
               <p className="text-muted">Choose a page from the sidebar to display its content.</p>
+              {contentError && (
+                <div className="alert alert-warning mt-3">
+                  <i className="bi bi-exclamation-triangle me-2"></i>
+                  Error loading content: {contentError}
+                </div>
+              )}
             </div>
           </div>
         )}
@@ -2229,165 +2250,7 @@ const UserManagement: React.FC = () => {
   );
 };
 
-const Dashboard: React.FC = () => {
-  const { user, logout } = useAuth();
-  const [activeSection, setActiveSection] = useState<'dashboard' | 'content' | 'documents' | 'users'>('dashboard');
 
-  const getRoleIcon = (role: string) => {
-    switch (role) {
-      case 'administrator': return 'bi-shield-check';
-      case 'editor': return 'bi-pencil-square';
-      case 'read-only': return 'bi-eye';
-      default: return 'bi-person';
-    }
-  };
-
-  const getRoleBadge = (role: string) => {
-    switch (role) {
-      case 'administrator': return 'bg-danger';
-      case 'editor': return 'bg-warning';
-      case 'read-only': return 'bg-info';
-      default: return 'bg-secondary';
-    }
-  };
-
-  const renderContent = () => {
-    switch (activeSection) {
-      case 'content':
-        return <ContentManagement />;
-      case 'documents':
-        return <DocumentManagement />;
-      case 'users':
-        return user?.role === 'administrator' ? <UserManagement /> : <div className="alert alert-warning">Access denied. Administrator role required.</div>;
-      default:
-        return (
-          <div className="row g-4">
-            <div className="col-md-4">
-              <div className="card h-100 border-primary">
-                <div className="card-body text-center">
-                  <i className="bi bi-file-text fs-1 text-primary mb-3"></i>
-                  <h5 className="card-title">Content Management</h5>
-                  <p className="card-text text-muted">Create and manage website content</p>
-                  <button 
-                    className="btn btn-primary"
-                    onClick={() => setActiveSection('content')}
-                  >
-                    <i className="bi bi-plus-circle me-2"></i>
-                    Manage Content
-                  </button>
-                </div>
-              </div>
-            </div>
-            
-            <div className="col-md-4">
-              <div className="card h-100 border-success">
-                <div className="card-body text-center">
-                  <i className="bi bi-folder fs-1 text-success mb-3"></i>
-                  <h5 className="card-title">Document Library</h5>
-                  <p className="card-text text-muted">Upload and organize documents</p>
-                  <button 
-                    className="btn btn-success"
-                    onClick={() => setActiveSection('documents')}
-                  >
-                    <i className="bi bi-upload me-2"></i>
-                    Manage Documents
-                  </button>
-                </div>
-              </div>
-            </div>
-            
-            <div className="col-md-4">
-              <div className="card h-100 border-warning">
-                <div className="card-body text-center">
-                  <i className="bi bi-people fs-1 text-warning mb-3"></i>
-                  <h5 className="card-title">User Management</h5>
-                  <p className="card-text text-muted">Manage users and permissions</p>
-                  <button 
-                    className="btn btn-warning"
-                    disabled={user?.role !== 'administrator'}
-                    onClick={() => setActiveSection('users')}
-                  >
-                    <i className="bi bi-person-gear me-2"></i>
-                    Manage Users
-                  </button>
-                </div>
-              </div>
-            </div>
-            
-            <div className="col-12 mt-4">
-              <div className="card bg-light">
-                <div className="card-body">
-                  <h6 className="card-title">
-                    <i className="bi bi-info-circle me-2"></i>
-                    System Information
-                  </h6>
-                  <div className="row">
-                    <div className="col-md-6">
-                      <small className="text-muted">
-                        <strong>User ID:</strong> {user?.id}<br/>
-                        <strong>Email:</strong> {user?.email}
-                      </small>
-                    </div>
-                    <div className="col-md-6">
-                      <small className="text-muted">
-                        <strong>Backend:</strong> http://localhost:3001<br/>
-                        <strong>Frontend:</strong> http://localhost:5173
-                      </small>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        );
-    }
-  };
-
-  return (
-    <div className="row">
-      <div className="col-12">
-        <div className="card shadow">
-          <div className="card-header bg-primary text-white">
-            <div className="d-flex justify-content-between align-items-center">
-              <div>
-                <h3 className="mb-0">
-                  <i className="bi bi-house-door me-2"></i>
-                  Welcome, {user?.username}!
-                </h3>
-                <span className={`badge ${getRoleBadge(user?.role || '')}`}>
-                  <i className={`bi ${getRoleIcon(user?.role || '')} me-1`}></i>
-                  {user?.role}
-                </span>
-              </div>
-              <div className="d-flex gap-2">
-                {activeSection !== 'dashboard' && (
-                  <button
-                    onClick={() => setActiveSection('dashboard')}
-                    className="btn btn-outline-light"
-                  >
-                    <i className="bi bi-house me-2"></i>
-                    Dashboard
-                  </button>
-                )}
-                <button
-                  onClick={logout}
-                  className="btn btn-outline-light"
-                >
-                  <i className="bi bi-box-arrow-right me-2"></i>
-                  Logout
-                </button>
-              </div>
-            </div>
-          </div>
-          
-          <div className="card-body">
-            {renderContent()}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
 
 const AppContent: React.FC = () => {
   const { user, isLoading, logout } = useAuth();
@@ -2467,7 +2330,7 @@ const AppContent: React.FC = () => {
       
       <div className="container mt-4">
         {user ? (
-          <Dashboard />
+          <DashboardPage />
         ) : showAdminLogin ? (
           <AdminLoginForm onBack={handleBackToPublic} />
         ) : (

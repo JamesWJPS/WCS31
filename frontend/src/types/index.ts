@@ -36,6 +36,11 @@ export interface Content {
   createdAt: string;
   updatedAt: string;
   publishedAt: string | null;
+  // Menu-related properties
+  menu_title?: string;
+  parent_id?: string | null;
+  menu_order?: number;
+  show_in_menu?: boolean | number;
 }
 
 export interface Template {
@@ -71,6 +76,11 @@ export interface ContentFormData {
   templateId: string;
   status: 'draft' | 'published' | 'archived';
   metadata: Record<string, any>;
+  // Menu-related properties
+  menu_title?: string;
+  parent_id?: string | null;
+  menu_order?: number;
+  show_in_menu?: boolean | number;
 }
 
 export interface ContentListItem {
@@ -83,6 +93,11 @@ export interface ContentListItem {
   createdAt: string;
   updatedAt: string;
   publishedAt: string | null;
+  // Menu-related properties
+  menu_title?: string;
+  parent_id?: string | null;
+  menu_order?: number;
+  show_in_menu?: boolean | number;
 }
 
 export interface ContentFilter {
@@ -174,4 +189,47 @@ export interface UpdateUserData {
   password?: string;
   role?: 'administrator' | 'editor' | 'read-only';
   isActive?: boolean;
+}
+
+export interface ContentItem {
+  id: string;
+  title: string;
+  slug?: string;
+  menu_title?: string;
+  parent_id?: string | null;
+  menu_order?: number;
+  show_in_menu?: boolean | number;
+  status?: 'draft' | 'published' | 'archived';
+  updated_at?: string;
+  children?: ContentItem[];
+}
+
+export interface ErrorState {
+  code: string;
+  message: string;
+  details?: Record<string, any>;
+  timestamp: Date;
+  retryable: boolean;
+}
+
+export interface LoadingState {
+  isLoading: boolean;
+  operation?: string;
+  progress?: number;
+}
+
+export interface NotificationState {
+  id: string;
+  type: 'success' | 'error' | 'warning' | 'info';
+  title: string;
+  message: string;
+  timestamp: Date;
+  duration?: number;
+  actions?: NotificationAction[];
+}
+
+export interface NotificationAction {
+  label: string;
+  action: () => void;
+  variant?: 'primary' | 'secondary' | 'danger';
 }
