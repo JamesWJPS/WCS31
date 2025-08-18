@@ -1,6 +1,6 @@
 import React, { useState, useCallback } from 'react';
-import Button from '../ui/Button';
-import Modal from '../ui/Modal';
+import { Button } from '../ui/Button';
+import { Modal } from '../ui/Modal';
 import FileUpload from './FileUpload';
 import FolderTree from './FolderTree';
 import DocumentList from './DocumentList';

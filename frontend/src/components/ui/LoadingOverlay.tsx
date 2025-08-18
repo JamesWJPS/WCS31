@@ -1,5 +1,5 @@
 import React, { ReactNode } from 'react';
-import LoadingSpinner from './LoadingSpinner';
+import { LoadingSpinner } from './LoadingSpinner';
 import './LoadingOverlay.css';
 
 interface LoadingOverlayProps {

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ContentItem, ErrorState, LoadingState } from '../../types';
 import { ContentUpdateEvent } from '../../services/realTimeContentService';
+import DragDropMenuManager from './DragDropMenuManager';
 import './PageMenuSidebar.css';
 
 interface PageMenuSidebarProps {
@@ -24,6 +25,14 @@ interface PageMenuSidebarProps {
   onRetry?: () => Promise<void>;
   onRefresh?: () => Promise<void>;
   onClearError?: () => void;
+  onMenuUpdate?: (updates: MenuUpdate[]) => Promise<void>;
+}
+
+interface MenuUpdate {
+  id: string;
+  menu_order: number;
+  parent_id?: string | null;
+  show_in_menu?: boolean | number;
 }
 
 const PageMenuSidebar: React.FC<PageMenuSidebarProps> = ({
@@ -46,7 +55,8 @@ const PageMenuSidebar: React.FC<PageMenuSidebarProps> = ({
   isHealthy = true,
   onRetry,
   onRefresh,
-  onClearError
+  onClearError,
+  onMenuUpdate
 }) => {
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
   const [menuTree, setMenuTree] = useState<ContentItem[]>([]);
@@ -55,6 +65,7 @@ const PageMenuSidebar: React.FC<PageMenuSidebarProps> = ({
   const [confirmDelete, setConfirmDelete] = useState<ContentItem | null>(null);
   const [retryingOperation, setRetryingOperation] = useState<boolean>(false);
   const [refreshingContent, setRefreshingContent] = useState<boolean>(false);
+  const [showMenuManager, setShowMenuManager] = useState<boolean>(false);
 
   // Build hierarchical menu tree from flat content array
   useEffect(() => {
@@ -208,6 +219,13 @@ const PageMenuSidebar: React.FC<PageMenuSidebarProps> = ({
   const handleClearError = () => {
     if (onClearError) {
       onClearError();
+    }
+  };
+
+  const handleMenuUpdate = async (updates: MenuUpdate[]) => {
+    if (onMenuUpdate) {
+      await onMenuUpdate(updates);
+      setShowMenuManager(false);
     }
   };
 
@@ -491,6 +509,15 @@ const PageMenuSidebar: React.FC<PageMenuSidebarProps> = ({
               <i className="bi bi-shield-check me-1"></i>
               Admin View
             </small>
+            {onMenuUpdate && (
+              <button
+                className="btn btn-sm btn-outline-primary menu-manager-btn"
+                onClick={() => setShowMenuManager(true)}
+                title="Manage menu order"
+              >
+                <i className="bi bi-list-ul"></i>
+              </button>
+            )}
             {isRealTimeEnabled && (
               <small 
                 className={`real-time-indicator ${isHealthy ? 'healthy' : 'unhealthy'}`}
@@ -666,6 +693,16 @@ const PageMenuSidebar: React.FC<PageMenuSidebarProps> = ({
             </div>
           </div>
         </div>
+      )}
+
+      {/* Menu Manager Modal */}
+      {showMenuManager && onMenuUpdate && (
+        <DragDropMenuManager
+          contents={contents}
+          onMenuUpdate={handleMenuUpdate}
+          onClose={() => setShowMenuManager(false)}
+          loading={loading}
+        />
       )}
     </div>
   );

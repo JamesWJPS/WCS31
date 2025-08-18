@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { User, ValidationError, CreateUserData, UpdateUserData } from '../../types';
 import { userService } from '../../services/userService';
-import Button from '../ui/Button';
-import Input from '../ui/Input';
-import Select from '../ui/Select';
-import Modal from '../ui/Modal';
-import ErrorMessage from '../ui/ErrorMessage';
-import LoadingSpinner from '../ui/LoadingSpinner';
+import { Button } from '../ui/Button';
+import { Input } from '../ui/Input';
+import { Select } from '../ui/Select';
+import { Modal } from '../ui/Modal';
+import { ErrorMessage } from '../ui/ErrorMessage';
+import { LoadingSpinner } from '../ui/LoadingSpinner';
 import './UserForm.css';
 
 interface UserFormProps {

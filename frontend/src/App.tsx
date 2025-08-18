@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { BrowserRouter } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
-import DashboardPage from './pages/dashboard/DashboardPage';
+import AppRouter from './router/AppRouter';
 import PageMenuSidebar from './components/layout/PageMenuSidebar';
 import { ContentItem } from './types';
 import { useRealTimeContent } from './hooks/useRealTimeContent';
@@ -2330,7 +2331,7 @@ const AppContent: React.FC = () => {
       
       <div className="container mt-4">
         {user ? (
-          <DashboardPage />
+          <AppRouter />
         ) : showAdminLogin ? (
           <AdminLoginForm onBack={handleBackToPublic} />
         ) : (
@@ -2353,9 +2354,10 @@ const AppContent: React.FC = () => {
 
 function App(): JSX.Element {
   return (
-    <AuthProvider>
-      <AppContent />
-      <style jsx global>{`
+    <BrowserRouter>
+      <AuthProvider>
+        <AppContent />
+        <style jsx global>{`
         .content-display h1,
         .content-display h2,
         .content-display h3,
@@ -2426,7 +2428,8 @@ function App(): JSX.Element {
           margin: 1rem 0;
         }
       `}</style>
-    </AuthProvider>
+      </AuthProvider>
+    </BrowserRouter>
   );
 }
 

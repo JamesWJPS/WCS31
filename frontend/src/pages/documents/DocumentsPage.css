@@ -1,27 +1,126 @@
 .documents-page {
-  height: 100vh;
-  display: flex;
-  flex-direction: column;
+  max-width: 100%;
 }
 
 .documents-page__unauthorized {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  height: 100vh;
   text-align: center;
-  gap: 1rem;
+  padding: 3rem 2rem;
+  background: #fff3cd;
+  border: 1px solid #ffeaa7;
+  border-radius: 8px;
+  color: #856404;
 }
 
-.documents-page__unauthorized h1 {
-  margin: 0;
-  font-size: 2rem;
-  color: #dc2626;
+.documents-actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
 }
 
-.documents-page__unauthorized p {
-  margin: 0;
-  font-size: 1.125rem;
-  color: #6b7280;
+.folder-tree {
+  padding: 1rem 0;
+}
+
+.folder-item {
+  padding: 0.5rem 0;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: background-color 0.2s ease;
+}
+
+.folder-item:hover {
+  background-color: #f8f9fa;
+}
+
+.folder-item i {
+  color: #ffc107;
+}
+
+.empty-state {
+  padding: 3rem 2rem;
+  text-align: center;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border: 2px dashed #dee2e6;
+}
+
+.empty-state i {
+  font-size: 4rem;
+  color: #adb5bd;
+  margin-bottom: 1rem;
+}
+
+.empty-state h5 {
+  color: #495057;
+  margin-bottom: 0.5rem;
+}
+
+.empty-state p {
+  color: #6c757d;
+  margin-bottom: 1.5rem;
+}
+
+/* File list styling */
+.list-group-item {
+  border: 1px solid #dee2e6;
+  padding: 0.75rem 1rem;
+}
+
+.list-group-item:first-child {
+  border-top-left-radius: 0.375rem;
+  border-top-right-radius: 0.375rem;
+}
+
+.list-group-item:last-child {
+  border-bottom-left-radius: 0.375rem;
+  border-bottom-right-radius: 0.375rem;
+}
+
+.list-group-item i {
+  color: #6c757d;
+}
+
+/* Card improvements */
+.card {
+  border: 1px solid #dee2e6;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.card-header {
+  background-color: #f8f9fa;
+  border-bottom: 1px solid #dee2e6;
+  font-weight: 600;
+  color: #495057;
+}
+
+.card-header h6 {
+  margin-bottom: 0;
+}
+
+/* Modal file upload styling */
+.modal .form-control[type="file"] {
+  padding: 0.5rem;
+}
+
+.modal .form-text {
+  font-size: 0.875rem;
+  color: #6c757d;
+  margin-top: 0.25rem;
+}
+
+/* Responsive improvements */
+@media (max-width: 768px) {
+  .documents-actions {
+    flex-direction: column;
+  }
+  
+  .row > .col-md-3,
+  .row > .col-md-9 {
+    margin-bottom: 1rem;
+  }
+  
+  .folder-tree {
+    max-height: 200px;
+    overflow-y: auto;
+  }
 }

@@ -527,6 +527,45 @@ export class ContentController {
   };
 
   /**
+   * Bulk update menu order and hierarchy
+   */
+  bulkUpdateMenuOrder = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+    try {
+      const { updates } = req.body;
+      
+      if (!updates || !Array.isArray(updates)) {
+        res.status(400).json({
+          success: false,
+          error: {
+            code: 'MISSING_UPDATES',
+            message: 'Updates array is required',
+            timestamp: new Date().toISOString()
+          }
+        });
+        return;
+      }
+
+      const result = await this.contentService.bulkUpdateMenuOrder(updates, req.user.role, req.user.userId);
+
+      if (result.success) {
+        res.status(200).json(result);
+      } else {
+        const statusCode = this.getStatusCodeFromError(result.error?.code);
+        res.status(statusCode).json(result);
+      }
+    } catch (error) {
+      res.status(500).json({
+        success: false,
+        error: {
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Internal server error',
+          timestamp: new Date().toISOString()
+        }
+      });
+    }
+  };
+
+  /**
    * Map error codes to HTTP status codes
    */
   private getStatusCodeFromError(errorCode?: string): number {

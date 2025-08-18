@@ -7,5 +7,5 @@ export { default as ProtectedRoute } from './auth/ProtectedRoute';
 export { default as PageMenuSidebar } from './layout/PageMenuSidebar';
 
 // UI components
-export { default as Button } from './ui/Button';
-export { default as Input } from './ui/Input';
+export { Button } from './ui/Button';
+export { Input } from './ui/Input';

@@ -4,6 +4,7 @@ import PageMenuSidebar from '../../components/layout/PageMenuSidebar';
 import NotificationSystem from '../../components/common/NotificationSystem';
 import { ContentItem, Content } from '../../types';
 import { contentService } from '../../services/contentService';
+import { menuService, MenuUpdate } from '../../services/menuService';
 import { useRealTimeContent } from '../../hooks/useRealTimeContent';
 import { useNotifications } from '../../hooks/useNotifications';
 import { ContentUpdateEvent } from '../../services/realTimeContentService';
@@ -179,6 +180,34 @@ const DashboardPage: React.FC = () => {
       );
     } finally {
       setLoadingContentDetails(false);
+    }
+  };
+
+  // Handle menu order updates
+  const handleMenuUpdate = async (updates: MenuUpdate[]) => {
+    try {
+      await menuService.bulkUpdateMenuOrder(updates);
+      
+      // Refresh content to reflect the changes
+      await refreshContents();
+      
+      addSuccessNotification(
+        'Menu Updated',
+        'Page menu order has been successfully updated.'
+      );
+    } catch (error) {
+      console.error('Failed to update menu order:', error);
+      addErrorNotification(
+        'Menu Update Failed',
+        'Failed to update page menu order. Please try again.',
+        [
+          {
+            label: 'Retry',
+            action: () => handleMenuUpdate(updates),
+            variant: 'primary'
+          }
+        ]
+      );
     }
   };
 
@@ -478,6 +507,7 @@ const DashboardPage: React.FC = () => {
             onRetry={retryLastOperation}
             onRefresh={refreshContents}
             onClearError={clearError}
+            onMenuUpdate={handleMenuUpdate}
           />
         </div>
 

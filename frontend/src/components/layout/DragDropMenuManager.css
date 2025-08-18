@@ -1,0 +1,254 @@
+.menu-manager-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1050;
+}
+
+.menu-manager-modal {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  width: 90%;
+  max-width: 800px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.menu-manager-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid #dee2e6;
+}
+
+.menu-manager-header h5 {
+  margin: 0;
+  display: flex;
+  align-items: center;
+}
+
+.menu-manager-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1rem 1.5rem;
+}
+
+.menu-manager-instructions {
+  background: #f8f9fa;
+  border: 1px solid #e9ecef;
+  border-radius: 4px;
+  padding: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.menu-manager-instructions p {
+  margin: 0;
+  font-size: 0.9rem;
+  color: #6c757d;
+}
+
+.menu-manager-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem;
+  text-align: center;
+}
+
+.menu-manager-loading p {
+  margin-top: 1rem;
+  color: #6c757d;
+}
+
+.menu-manager-list {
+  min-height: 200px;
+}
+
+.menu-manager-item-wrapper {
+  position: relative;
+}
+
+.menu-manager-item {
+  border: 1px solid #e9ecef;
+  border-radius: 4px;
+  margin-bottom: 4px;
+  background: white;
+  transition: all 0.2s ease;
+  cursor: move;
+}
+
+.menu-manager-item:hover {
+  border-color: #007bff;
+  box-shadow: 0 2px 4px rgba(0, 123, 255, 0.1);
+}
+
+.menu-manager-item.dragging {
+  opacity: 0.5;
+  transform: rotate(2deg);
+}
+
+.menu-manager-item.drag-over-inside {
+  border-color: #28a745;
+  background-color: #f8fff9;
+  box-shadow: 0 0 0 2px rgba(40, 167, 69, 0.2);
+}
+
+.menu-manager-item.hidden {
+  opacity: 0.6;
+  background-color: #f8f9fa;
+}
+
+.menu-manager-item.draft {
+  border-left: 4px solid #ffc107;
+}
+
+.menu-item-content {
+  display: flex;
+  align-items: center;
+  padding: 0.75rem;
+  gap: 0.75rem;
+}
+
+.drag-handle {
+  color: #6c757d;
+  cursor: grab;
+  display: flex;
+  align-items: center;
+}
+
+.drag-handle:active {
+  cursor: grabbing;
+}
+
+.menu-item-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.menu-item-title {
+  font-weight: 500;
+  margin-bottom: 0.25rem;
+  display: flex;
+  align-items: center;
+}
+
+.menu-item-details {
+  font-size: 0.85rem;
+}
+
+.menu-item-controls {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.menu-item-children {
+  border-left: 2px solid #e9ecef;
+  margin-left: 1rem;
+}
+
+.drop-indicator {
+  height: 3px;
+  background: #007bff;
+  border-radius: 2px;
+  margin: 2px 0;
+  opacity: 0.8;
+  animation: pulse 1s infinite;
+}
+
+.drop-indicator.before {
+  margin-bottom: 0;
+}
+
+.drop-indicator.after {
+  margin-top: 0;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 0.8;
+  }
+  50% {
+    opacity: 0.4;
+  }
+}
+
+.menu-manager-footer {
+  border-top: 1px solid #dee2e6;
+  padding: 1rem 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.menu-manager-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.unsaved-changes-indicator {
+  font-size: 0.9rem;
+  color: #856404;
+  display: flex;
+  align-items: center;
+}
+
+.badge-draft {
+  background-color: #ffc107;
+  color: #212529;
+  font-size: 0.7rem;
+  padding: 0.2rem 0.4rem;
+  border-radius: 3px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .menu-manager-modal {
+    width: 95%;
+    max-height: 95vh;
+  }
+  
+  .menu-manager-header,
+  .menu-manager-body,
+  .menu-manager-footer {
+    padding: 0.75rem 1rem;
+  }
+  
+  .menu-item-content {
+    padding: 0.5rem;
+    gap: 0.5rem;
+  }
+  
+  .menu-manager-footer {
+    flex-direction: column;
+    gap: 0.75rem;
+    align-items: stretch;
+  }
+  
+  .menu-manager-actions {
+    justify-content: center;
+  }
+}
+
+/* Accessibility improvements */
+.menu-manager-item:focus-within {
+  outline: 2px solid #007bff;
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .menu-manager-item,
+  .drop-indicator {
+    transition: none;
+    animation: none;
+  }
+}

@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { User, UserFilter } from '../../types';
 import { userService } from '../../services/userService';
-import Button from '../ui/Button';
-import Input from '../ui/Input';
-import Select from '../ui/Select';
-import LoadingSpinner from '../ui/LoadingSpinner';
-import ErrorMessage from '../ui/ErrorMessage';
+import { Button } from '../ui/Button';
+import { Input } from '../ui/Input';
+import { Select } from '../ui/Select';
+import { LoadingSpinner } from '../ui/LoadingSpinner';
+import { ErrorMessage } from '../ui/ErrorMessage';
 import './UserList.css';
 
 interface UserListProps {

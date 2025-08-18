@@ -254,6 +254,36 @@ export class ContentRepository extends BaseRepository<Content, ContentTable> {
     };
   }
 
+  async bulkUpdateMenuOrder(updates: Array<{id: string; menu_order: number; parent_id?: string | null; show_in_menu?: boolean | number}>): Promise<void> {
+    const trx = await this.db.transaction();
+    
+    try {
+      for (const update of updates) {
+        const updateData: any = {
+          menu_order: update.menu_order,
+          updated_at: new Date(),
+        };
+
+        if (update.parent_id !== undefined) {
+          updateData.parent_id = update.parent_id;
+        }
+
+        if (update.show_in_menu !== undefined) {
+          updateData.show_in_menu = update.show_in_menu;
+        }
+
+        await trx(this.tableName)
+          .where({ id: update.id })
+          .update(updateData);
+      }
+
+      await trx.commit();
+    } catch (error) {
+      await trx.rollback();
+      throw error;
+    }
+  }
+
   protected mapToTable(entity: Content): ContentTable {
     return {
       id: entity.id,

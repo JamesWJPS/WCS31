@@ -1,5 +1,5 @@
 import React, { Component, ReactNode, ErrorInfo } from 'react';
-import Button from './Button';
+import { Button } from './Button';
 import './ErrorBoundary.css';
 
 interface ErrorBoundaryProps {

@@ -59,4 +59,11 @@ router.get('/:id/preview', contentController.getContentPreview.bind(contentContr
 router.get('/:id/versions', requireRole(['administrator', 'editor']), contentController.getContentVersions.bind(contentController));
 router.post('/:id/restore', requireRole(['administrator', 'editor']), contentController.restoreContentVersion.bind(contentController));
 
+// Menu management
+router.post('/bulk-update-menu', 
+  ...routeSecurity.content,
+  requireRole(['administrator', 'editor']), 
+  contentController.bulkUpdateMenuOrder.bind(contentController)
+);
+
 export default router;

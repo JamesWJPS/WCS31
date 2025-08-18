@@ -3,6 +3,13 @@ import { TemplateRepository } from '../models/TemplateRepository';
 import { Content } from '../models/interfaces';
 import { randomUUID } from 'crypto';
 
+export interface MenuUpdate {
+  id: string;
+  menu_order: number;
+  parent_id?: string | null;
+  show_in_menu?: boolean | number;
+}
+
 export interface CreateContentData {
   title: string;
   body: string;
@@ -709,6 +716,67 @@ export class ContentService {
         error: {
           code: 'CONTENT_RESTORE_ERROR',
           message: 'Failed to restore content version',
+        },
+      };
+    }
+  }
+
+  /**
+   * Bulk update menu order and hierarchy
+   */
+  async bulkUpdateMenuOrder(updates: MenuUpdate[], userRole: string, userId: string): Promise<ServiceResponse<void>> {
+    try {
+      // Validate updates array
+      if (!updates || updates.length === 0) {
+        return {
+          success: false,
+          error: {
+            code: 'MISSING_UPDATES',
+            message: 'Updates array is required',
+          },
+        };
+      }
+
+      // Validate each update
+      for (const update of updates) {
+        if (!update.id || typeof update.menu_order !== 'number') {
+          return {
+            success: false,
+            error: {
+              code: 'INVALID_UPDATE',
+              message: 'Each update must have id and menu_order',
+            },
+          };
+        }
+
+        // Check permissions for each content item
+        if (userRole !== 'administrator') {
+          const content = await this.contentRepository.findById(update.id);
+          if (!content || content.authorId !== userId) {
+            return {
+              success: false,
+              error: {
+                code: 'ACCESS_DENIED',
+                message: 'You do not have permission to update menu order for some content',
+              },
+            };
+          }
+        }
+      }
+
+      // Perform bulk update
+      await this.contentRepository.bulkUpdateMenuOrder(updates);
+
+      return {
+        success: true,
+      };
+    } catch (error) {
+      console.error('Error bulk updating menu order:', error);
+      return {
+        success: false,
+        error: {
+          code: 'MENU_UPDATE_ERROR',
+          message: 'Failed to update menu order',
         },
       };
     }
