@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { contentService } from '../../services/contentService';
-import { ContentListItem, ContentFormData, Template } from '../../types';
+import { ContentListItem, ContentFormData, Template, ContentItem, MenuUpdate } from '../../types';
+import DragDropMenuManager from '../../components/layout/DragDropMenuManager';
 import './ContentPage.css';
 
 const ContentPage: React.FC = () => {
@@ -10,6 +11,8 @@ const ContentPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [showModal, setShowModal] = useState(false);
   const [editingContent, setEditingContent] = useState<ContentListItem | null>(null);
+  const [showMenuManager, setShowMenuManager] = useState(false);
+  const [menuManagerLoading, setMenuManagerLoading] = useState(false);
   const [formData, setFormData] = useState<ContentFormData>({
     title: '',
     slug: '',
@@ -128,6 +131,51 @@ const ContentPage: React.FC = () => {
     }));
   };
 
+  const handleManageMenuOrder = () => {
+    setShowMenuManager(true);
+  };
+
+  const handleMenuUpdate = async (updates: MenuUpdate[]) => {
+    try {
+      console.log('ContentPage: handleMenuUpdate called with updates:', updates);
+      setMenuManagerLoading(true);
+      await contentService.bulkUpdateMenuOrder(updates);
+      console.log('ContentPage: bulkUpdateMenuOrder completed successfully');
+      // Refresh the content list to show updated order
+      await loadData();
+      console.log('ContentPage: content list refreshed');
+    } catch (err) {
+      console.error('Failed to update menu order:', err);
+      console.error('Error details:', {
+        message: err instanceof Error ? err.message : 'Unknown error',
+        stack: err instanceof Error ? err.stack : undefined,
+        statusCode: err && typeof err === 'object' && 'statusCode' in err ? (err as any).statusCode : undefined
+      });
+      throw new Error('Failed to update menu order');
+    } finally {
+      setMenuManagerLoading(false);
+    }
+  };
+
+  const handleCloseMenuManager = () => {
+    setShowMenuManager(false);
+  };
+
+  // Convert ContentListItem[] to ContentItem[] for the menu manager
+  const getContentItemsForMenu = (): ContentItem[] => {
+    return contentItems.map(item => ({
+      id: item.id,
+      title: item.title,
+      slug: item.slug,
+      menu_title: item.menu_title,
+      parent_id: item.parent_id,
+      menu_order: item.menu_order,
+      show_in_menu: item.show_in_menu,
+      status: item.status,
+      updated_at: item.updatedAt
+    }));
+  };
+
   if (loading) {
     return (
       <div className="content-page">
@@ -179,6 +227,16 @@ const ContentPage: React.FC = () => {
             <i className="bi bi-plus me-2"></i>
             Create New Content
           </button>
+          {contentItems.length > 0 && (
+            <button 
+              className="btn btn-outline-secondary ms-2" 
+              onClick={handleManageMenuOrder}
+              disabled={loading}
+            >
+              <i className="bi bi-list-ul me-2"></i>
+              Manage Menu Order
+            </button>
+          )}
         </div>
         
         {contentItems.length > 0 ? (
@@ -383,6 +441,16 @@ const ContentPage: React.FC = () => {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Menu Manager Modal */}
+      {showMenuManager && (
+        <DragDropMenuManager
+          contents={getContentItemsForMenu()}
+          onMenuUpdate={handleMenuUpdate}
+          onClose={handleCloseMenuManager}
+          loading={menuManagerLoading}
+        />
       )}
     </div>
   );

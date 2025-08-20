@@ -1,5 +1,5 @@
 import { apiService } from './api';
-import { Content, ContentFormData, ContentListItem, ContentFilter, Template, ApiResponse } from '../types';
+import { Content, ContentFormData, ContentListItem, ContentFilter, Template, ApiResponse, MenuUpdate } from '../types';
 
 export class ContentService {
   /**
@@ -87,6 +87,19 @@ export class ContentService {
       .replace(/-+/g, '-')
       .replace(/^-+|-+$/g, '')
       .trim();
+  }
+
+  /**
+   * Bulk update menu order and hierarchy
+   */
+  async bulkUpdateMenuOrder(updates: MenuUpdate[]): Promise<void> {
+    // Convert MenuUpdate[] to the format expected by the simple server
+    const contents = updates.map(update => ({
+      id: update.id,
+      menu_order: update.menu_order,
+      parent_id: update.parent_id
+    }));
+    await apiService.put('/content/bulk-update', { contents });
   }
 
   /**

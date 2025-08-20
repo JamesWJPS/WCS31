@@ -233,3 +233,10 @@ export interface NotificationAction {
   action: () => void;
   variant?: 'primary' | 'secondary' | 'danger';
 }
+
+export interface MenuUpdate {
+  id: string;
+  menu_order: number;
+  parent_id?: string | null;
+  show_in_menu?: boolean | number;
+}

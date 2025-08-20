@@ -79,6 +79,15 @@ Each menu item in admin mode will include:
 - Context menu for advanced operations
 - Drag handles for reordering (when in organize mode)
 
+### 5. Content Manager Integration
+
+**Menu Management Access**:
+The Content Manager page will include:
+- "Manage Menu Order" button in the page header
+- Integration with existing DragDropMenuManager component
+- Automatic content list refresh after menu changes
+- Consistent UI patterns with existing admin interface
+
 ## Data Models
 
 ### Enhanced Content Model
@@ -184,10 +193,15 @@ interface MenuState {
 - Implement optimistic updates
 - Add error handling and recovery
 
-### Phase 4: Enhanced Admin Features
+### Phase 4: Content Manager Integration
+- Integrate drag-and-drop menu manager into Content Manager page
+- Add menu management button to content management interface
+- Connect menu updates with content refresh functionality
+
+### Phase 5: Enhanced Admin Features
 - Add inline editing capabilities
-- Implement drag-and-drop reordering in menu
 - Add bulk operations support
+- Implement advanced menu organization features
 
 ## Technical Considerations
 

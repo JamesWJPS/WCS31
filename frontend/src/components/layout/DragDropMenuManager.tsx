@@ -144,6 +144,8 @@ const DragDropMenuManager: React.FC<DragDropMenuManagerProps> = ({
     
     if (!draggedItem || draggedItem.id === targetItem.id) return;
     
+    console.log('Drop detected:', draggedItem.id, 'onto', targetItem.id, 'position:', dragOverPosition);
+    
     const newTree = [...menuTree];
     const updates: MenuUpdate[] = [];
     
@@ -232,16 +234,21 @@ const DragDropMenuManager: React.FC<DragDropMenuManagerProps> = ({
     
     setMenuTree(newTree);
     setHasChanges(true);
+    console.log('Changes detected, hasChanges set to true');
     setDragOverItem(null);
     setDragOverPosition(null);
   };
 
   const toggleVisibility = (itemId: string) => {
+    console.log('Toggling visibility for item:', itemId);
     const updateVisibility = (items: MenuTreeItem[]): boolean => {
       for (const item of items) {
         if (item.id === itemId) {
+          const oldValue = item.show_in_menu;
           item.show_in_menu = item.show_in_menu ? 0 : 1;
+          console.log('Visibility changed from', oldValue, 'to', item.show_in_menu);
           setHasChanges(true);
+          console.log('Changes detected from visibility toggle, hasChanges set to true');
           return true;
         }
         if (updateVisibility(item.children)) {
@@ -257,7 +264,11 @@ const DragDropMenuManager: React.FC<DragDropMenuManagerProps> = ({
   };
 
   const handleSave = async () => {
-    if (!hasChanges) return;
+    console.log('handleSave called, hasChanges:', hasChanges);
+    if (!hasChanges) {
+      console.log('No changes to save');
+      return;
+    }
     
     setSaving(true);
     try {
@@ -277,10 +288,21 @@ const DragDropMenuManager: React.FC<DragDropMenuManagerProps> = ({
       
       collectUpdates(menuTree);
       
+      console.log('Sending updates:', updates);
       await onMenuUpdate(updates);
       setHasChanges(false);
+      console.log('Menu updates saved successfully');
     } catch (error) {
       console.error('Failed to save menu changes:', error);
+      let errorMessage = 'Unknown error';
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      }
+      // Check if it's an API error with more details
+      if (error && typeof error === 'object' && 'statusCode' in error) {
+        errorMessage += ` (Status: ${(error as any).statusCode})`;
+      }
+      alert('Failed to save menu changes: ' + errorMessage);
     } finally {
       setSaving(false);
     }
@@ -376,6 +398,15 @@ const DragDropMenuManager: React.FC<DragDropMenuManagerProps> = ({
               <i className="bi bi-info-circle me-2"></i>
               Drag and drop pages to reorder them. Drop on a page to make it a child, or between pages to reorder.
             </p>
+            <button 
+              className="btn btn-sm btn-outline-warning" 
+              onClick={() => {
+                console.log('Test button clicked, setting hasChanges to true');
+                setHasChanges(true);
+              }}
+            >
+              Test Changes (Debug)
+            </button>
           </div>
           
           {loading ? (

@@ -49,3 +49,14 @@ This feature enhancement ensures that the page menu navigation is consistently a
 2. WHEN an administrator views the page menu THEN the system SHALL visually indicate pages that are hidden from public view
 3. WHEN an administrator views the page menu THEN the system SHALL show admin-only controls (edit, delete) only when logged in
 4. WHEN a public visitor views the page menu THEN the system SHALL hide all admin-specific indicators and controls
+
+### Requirement 5
+
+**User Story:** As a site administrator, I want to access the drag and drop menu manager from the Content Manager page, so that I can organize my site's navigation structure while managing content.
+
+#### Acceptance Criteria
+
+1. WHEN an administrator is on the Content Manager page THEN the system SHALL provide a "Manage Menu Order" button in the page header
+2. WHEN an administrator clicks the "Manage Menu Order" button THEN the system SHALL open the drag and drop menu interface
+3. WHEN an administrator makes changes in the menu manager THEN the system SHALL update the menu order and refresh the content list
+4. WHEN menu changes are saved THEN the system SHALL provide visual feedback and close the menu manager interface
