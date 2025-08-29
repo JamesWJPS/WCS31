@@ -51,6 +51,13 @@ router.get('/:id/contents', folderController.getFolderContents);
 router.get('/:id/path', folderController.getFolderPath);
 
 /**
+ * @route GET /api/folders/:id/breadcrumbs
+ * @desc Get folder breadcrumbs for navigation
+ * @access Private (requires read permission)
+ */
+router.get('/:id/breadcrumbs', folderController.getFolderBreadcrumbs);
+
+/**
  * @route GET /api/folders/:id/stats
  * @desc Get folder statistics
  * @access Private (requires read permission)

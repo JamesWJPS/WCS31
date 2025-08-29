@@ -12,3 +12,4 @@ export { default as ErrorBoundary } from './ErrorBoundary';
 export { ErrorMessage } from './ErrorMessage';
 export { default as Card } from './Card';
 export { default as RichTextEditor } from './RichTextEditor';
+export { default as Breadcrumb } from './Breadcrumb';

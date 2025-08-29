@@ -264,11 +264,7 @@ const DragDropMenuManager: React.FC<DragDropMenuManagerProps> = ({
   };
 
   const handleSave = async () => {
-    console.log('handleSave called, hasChanges:', hasChanges);
-    if (!hasChanges) {
-      console.log('No changes to save');
-      return;
-    }
+    if (!hasChanges) return;
     
     setSaving(true);
     try {
@@ -288,19 +284,13 @@ const DragDropMenuManager: React.FC<DragDropMenuManagerProps> = ({
       
       collectUpdates(menuTree);
       
-      console.log('Sending updates:', updates);
       await onMenuUpdate(updates);
       setHasChanges(false);
-      console.log('Menu updates saved successfully');
     } catch (error) {
       console.error('Failed to save menu changes:', error);
       let errorMessage = 'Unknown error';
       if (error instanceof Error) {
         errorMessage = error.message;
-      }
-      // Check if it's an API error with more details
-      if (error && typeof error === 'object' && 'statusCode' in error) {
-        errorMessage += ` (Status: ${(error as any).statusCode})`;
       }
       alert('Failed to save menu changes: ' + errorMessage);
     } finally {
@@ -398,15 +388,6 @@ const DragDropMenuManager: React.FC<DragDropMenuManagerProps> = ({
               <i className="bi bi-info-circle me-2"></i>
               Drag and drop pages to reorder them. Drop on a page to make it a child, or between pages to reorder.
             </p>
-            <button 
-              className="btn btn-sm btn-outline-warning" 
-              onClick={() => {
-                console.log('Test button clicked, setting hasChanges to true');
-                setHasChanges(true);
-              }}
-            >
-              Test Changes (Debug)
-            </button>
           </div>
           
           {loading ? (

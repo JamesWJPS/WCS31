@@ -1,0 +1,144 @@
+.breadcrumb {
+  background-color: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  padding: 0.75rem 1rem;
+  margin-bottom: 1rem;
+}
+
+.breadcrumb__list {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.breadcrumb__item {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.breadcrumb__link {
+  background: none;
+  border: none;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  color: #3b82f6;
+  text-decoration: none;
+  cursor: pointer;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: all 0.15s ease-in-out;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 200px;
+}
+
+.breadcrumb__link:hover {
+  background-color: #dbeafe;
+  color: #1d4ed8;
+}
+
+.breadcrumb__link:focus {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+  background-color: #dbeafe;
+}
+
+.breadcrumb__text {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.875rem;
+  color: #6b7280;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 200px;
+}
+
+.breadcrumb__text--current {
+  color: #374151;
+  font-weight: 600;
+}
+
+.breadcrumb__text--ellipsis {
+  color: #9ca3af;
+  font-weight: normal;
+  cursor: default;
+}
+
+.breadcrumb__separator {
+  color: #9ca3af;
+  font-size: 0.875rem;
+  margin: 0 0.25rem;
+  user-select: none;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .breadcrumb {
+    padding: 0.5rem 0.75rem;
+  }
+
+  .breadcrumb__link,
+  .breadcrumb__text {
+    font-size: 0.8125rem;
+    max-width: 120px;
+  }
+
+  .breadcrumb__list {
+    gap: 0.125rem;
+  }
+
+  .breadcrumb__separator {
+    margin: 0 0.125rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .breadcrumb__link,
+  .breadcrumb__text {
+    max-width: 80px;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .breadcrumb {
+    border-width: 2px;
+  }
+
+  .breadcrumb__link {
+    border: 1px solid transparent;
+  }
+
+  .breadcrumb__link:focus {
+    border-color: #3b82f6;
+    outline: none;
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .breadcrumb__link {
+    transition: none;
+  }
+}
+
+/* Print styles */
+@media print {
+  .breadcrumb {
+    background: none;
+    border: none;
+    padding: 0;
+  }
+
+  .breadcrumb__link {
+    color: #000;
+    text-decoration: underline;
+  }
+}

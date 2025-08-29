@@ -1,0 +1,258 @@
+.folder-operations-modal {
+  max-width: 500px;
+}
+
+.folder-operations-modal--danger .modal__header {
+  background-color: #fef2f2;
+  border-bottom-color: #fecaca;
+}
+
+.folder-operations-modal--danger .modal__title {
+  color: #dc2626;
+}
+
+.folder-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.folder-form__field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.folder-form__label {
+  font-weight: 600;
+  color: #374151;
+  font-size: 0.875rem;
+}
+
+.folder-form__error {
+  margin-top: 0.25rem;
+}
+
+.folder-form__checkbox {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  font-size: 0.875rem;
+}
+
+.folder-form__checkbox input[type="checkbox"] {
+  width: 1rem;
+  height: 1rem;
+  border: 2px solid #d1d5db;
+  border-radius: 4px;
+  background-color: white;
+  cursor: pointer;
+  transition: all 0.15s ease-in-out;
+}
+
+.folder-form__checkbox input[type="checkbox"]:checked {
+  background-color: #3b82f6;
+  border-color: #3b82f6;
+  background-image: url("data:image/svg+xml,%3csvg viewBox='0 0 16 16' fill='white' xmlns='http://www.w3.org/2000/svg'%3e%3cpath d='m13.854 3.646-7.5 7.5a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L6 10.293l7.146-7.147a.5.5 0 0 1 .708.708z'/%3e%3c/svg%3e");
+}
+
+.folder-form__checkbox input[type="checkbox"]:focus {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+.folder-form__checkbox input[type="checkbox"]:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.folder-form__checkbox-label {
+  color: #6b7280;
+  line-height: 1.4;
+}
+
+.folder-form__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  padding-top: 1rem;
+  border-top: 1px solid #e5e7eb;
+}
+
+/* Delete folder specific styles */
+.folder-delete {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.folder-delete__warning {
+  display: flex;
+  gap: 1rem;
+  padding: 1rem;
+  background-color: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+}
+
+.folder-delete__icon {
+  font-size: 1.5rem;
+  flex-shrink: 0;
+}
+
+.folder-delete__content {
+  flex: 1;
+}
+
+.folder-delete__title {
+  margin: 0 0 0.5rem 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #dc2626;
+}
+
+.folder-delete__message {
+  margin: 0;
+  font-size: 0.875rem;
+  color: #7f1d1d;
+  line-height: 1.5;
+}
+
+.folder-delete__message strong {
+  font-weight: 600;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .folder-operations-modal {
+    max-width: 90vw;
+    margin: 1rem;
+  }
+
+  .folder-form__actions {
+    flex-direction: column-reverse;
+    gap: 0.5rem;
+  }
+
+  .folder-form__actions .button {
+    width: 100%;
+  }
+
+  .folder-delete__warning {
+    flex-direction: column;
+    gap: 0.75rem;
+    text-align: center;
+  }
+
+  .folder-delete__icon {
+    align-self: center;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .folder-form__checkbox input[type="checkbox"] {
+    border-width: 3px;
+  }
+
+  .folder-delete__warning {
+    border-width: 2px;
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .folder-form__checkbox input[type="checkbox"] {
+    transition: none;
+  }
+}
+
+/* Focus management */
+.folder-form__field:focus-within .folder-form__label {
+  color: #3b82f6;
+}
+
+/* Loading states */
+.folder-form__field input:disabled,
+.folder-form__checkbox input:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.folder-form__actions .button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Help text for form fields */
+.folder-form__help-text {
+  margin: 0.25rem 0 0 0;
+  font-size: 0.75rem;
+  color: #6b7280;
+  line-height: 1.4;
+}
+
+/* Folder statistics in delete modal */
+.folder-delete__stats {
+  margin-top: 0.75rem;
+  padding: 0.75rem;
+  background-color: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+}
+
+.folder-delete__stats-item {
+  margin: 0 0 0.25rem 0;
+  font-size: 0.875rem;
+  color: #374151;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.folder-delete__stats-item:last-child {
+  margin-bottom: 0;
+}
+
+/* Permission error styling */
+.folder-form__error {
+  margin-bottom: 1rem;
+}
+
+.folder-form__error:first-child {
+  margin-top: 0;
+}
+
+/* Enhanced validation styling */
+.folder-form__field input[aria-describedby] {
+  border-color: #dc2626;
+}
+
+.folder-form__field input[aria-describedby]:focus {
+  border-color: #dc2626;
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.1);
+}
+
+/* Accessibility improvements */
+@media (prefers-reduced-motion: reduce) {
+  .folder-form__field input,
+  .folder-form__checkbox input {
+    transition: none;
+  }
+}
+
+/* High contrast mode improvements */
+@media (prefers-contrast: high) {
+  .folder-delete__warning {
+    border-width: 3px;
+  }
+  
+  .folder-delete__stats {
+    border-width: 2px;
+  }
+  
+  .folder-form__help-text {
+    color: #000;
+  }
+}

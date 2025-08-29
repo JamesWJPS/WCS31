@@ -85,6 +85,200 @@ export class DocumentRepository extends BaseRepository<Document, DocumentTable> 
   }
 
   /**
+   * Get documents in folders accessible to a user with filtering, sorting, and pagination
+   */
+  async getDocumentsForUserWithFilters(
+    userId: string, 
+    userRole: string, 
+    folderRepository: any,
+    filters: {
+      folderId?: string;
+      mimeType?: string;
+      startDate?: Date;
+      endDate?: Date;
+      minSize?: number;
+      maxSize?: number;
+    },
+    sorting: {
+      sortBy: 'name' | 'size' | 'createdAt' | 'mimeType';
+      sortOrder: 'asc' | 'desc';
+    },
+    pagination: {
+      page: number;
+      limit: number;
+    }
+  ): Promise<{ documents: Document[]; totalCount: number }> {
+    // Get accessible folders
+    const accessibleFolders = await folderRepository.getFoldersForUser(userId, userRole);
+    let folderIds = accessibleFolders.map((folder: any) => folder.id);
+    
+    if (folderIds.length === 0) {
+      return { documents: [], totalCount: 0 };
+    }
+
+    // Apply folder filter if specified
+    if (filters.folderId) {
+      if (folderIds.includes(filters.folderId)) {
+        folderIds = [filters.folderId];
+      } else {
+        return { documents: [], totalCount: 0 };
+      }
+    }
+
+    // Build query
+    let query = this.db(this.tableName).whereIn('folder_id', folderIds);
+
+    // Apply filters
+    if (filters.mimeType) {
+      query = query.where('mime_type', filters.mimeType);
+    }
+
+    if (filters.startDate) {
+      query = query.where('created_at', '>=', filters.startDate);
+    }
+
+    if (filters.endDate) {
+      query = query.where('created_at', '<=', filters.endDate);
+    }
+
+    if (filters.minSize) {
+      query = query.where('size', '>=', filters.minSize);
+    }
+
+    if (filters.maxSize) {
+      query = query.where('size', '<=', filters.maxSize);
+    }
+
+    // Get total count before pagination
+    const totalCountResult = await query.clone().count('* as count');
+    const totalCount = totalCountResult[0]?.['count'] as number || 0;
+
+    // Apply sorting
+    const sortColumn = this.getSortColumn(sorting.sortBy);
+    query = query.orderBy(sortColumn, sorting.sortOrder);
+
+    // Apply pagination
+    const offset = (pagination.page - 1) * pagination.limit;
+    query = query.limit(pagination.limit).offset(offset);
+
+    const results = await query;
+    const documents = results.map(result => this.mapFromTable(result));
+
+    return { documents, totalCount };
+  }
+
+  /**
+   * Advanced search with filtering, sorting, and pagination
+   */
+  async searchDocumentsAdvanced(
+    searchTerm: string,
+    userId: string,
+    userRole: string,
+    folderRepository: any,
+    searchType: 'name' | 'metadata' | 'tags' | 'all',
+    filters: {
+      folderId?: string;
+      mimeType?: string;
+      startDate?: Date;
+      endDate?: Date;
+    },
+    sorting: {
+      sortBy: 'name' | 'size' | 'createdAt' | 'mimeType';
+      sortOrder: 'asc' | 'desc';
+    },
+    pagination: {
+      page: number;
+      limit: number;
+    }
+  ): Promise<{ documents: Document[]; totalCount: number }> {
+    // Get accessible folders
+    const accessibleFolders = await folderRepository.getFoldersForUser(userId, userRole);
+    let folderIds = accessibleFolders.map((folder: any) => folder.id);
+    
+    if (folderIds.length === 0) {
+      return { documents: [], totalCount: 0 };
+    }
+
+    // Apply folder filter if specified
+    if (filters.folderId) {
+      if (folderIds.includes(filters.folderId)) {
+        folderIds = [filters.folderId];
+      } else {
+        return { documents: [], totalCount: 0 };
+      }
+    }
+
+    // Build base query
+    let query = this.db(this.tableName).whereIn('folder_id', folderIds);
+
+    // Apply search filters based on search type
+    if (searchType === 'all') {
+      query = query.where(function() {
+        this.where('original_name', 'like', `%${searchTerm}%`)
+          .orWhere('filename', 'like', `%${searchTerm}%`)
+          .orWhere('metadata', 'like', `%${searchTerm}%`);
+      });
+    } else if (searchType === 'name') {
+      query = query.where(function() {
+        this.where('original_name', 'like', `%${searchTerm}%`)
+          .orWhere('filename', 'like', `%${searchTerm}%`);
+      });
+    } else if (searchType === 'metadata') {
+      query = query.where('metadata', 'like', `%${searchTerm}%`);
+    } else if (searchType === 'tags') {
+      query = query.where('metadata', 'like', `%"tags"%${searchTerm}%`);
+    }
+
+    // Apply additional filters
+    if (filters.mimeType) {
+      query = query.where('mime_type', filters.mimeType);
+    }
+
+    if (filters.startDate) {
+      query = query.where('created_at', '>=', filters.startDate);
+    }
+
+    if (filters.endDate) {
+      query = query.where('created_at', '<=', filters.endDate);
+    }
+
+    // Get total count before pagination
+    const totalCountResult = await query.clone().count('* as count');
+    const totalCount = totalCountResult[0]?.['count'] as number || 0;
+
+    // Apply sorting
+    const sortColumn = this.getSortColumn(sorting.sortBy);
+    query = query.orderBy(sortColumn, sorting.sortOrder);
+
+    // Apply pagination
+    const offset = (pagination.page - 1) * pagination.limit;
+    query = query.limit(pagination.limit).offset(offset);
+
+    const results = await query;
+    const documents = results.map(result => this.mapFromTable(result));
+
+    return { documents, totalCount };
+  }
+
+  /**
+   * Map sort field to database column
+   */
+  private getSortColumn(sortBy: string): string {
+    switch (sortBy) {
+      case 'name':
+        return 'original_name';
+      case 'size':
+        return 'size';
+      case 'createdAt':
+        return 'created_at';
+      case 'mimeType':
+        return 'mime_type';
+      default:
+        return 'created_at';
+    }
+  }
+
+  /**
    * Get document statistics for a folder
    */
   async getFolderStats(folderId: string): Promise<{

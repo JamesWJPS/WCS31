@@ -137,20 +137,12 @@ const ContentPage: React.FC = () => {
 
   const handleMenuUpdate = async (updates: MenuUpdate[]) => {
     try {
-      console.log('ContentPage: handleMenuUpdate called with updates:', updates);
       setMenuManagerLoading(true);
       await contentService.bulkUpdateMenuOrder(updates);
-      console.log('ContentPage: bulkUpdateMenuOrder completed successfully');
       // Refresh the content list to show updated order
       await loadData();
-      console.log('ContentPage: content list refreshed');
     } catch (err) {
       console.error('Failed to update menu order:', err);
-      console.error('Error details:', {
-        message: err instanceof Error ? err.message : 'Unknown error',
-        stack: err instanceof Error ? err.stack : undefined,
-        statusCode: err && typeof err === 'object' && 'statusCode' in err ? (err as any).statusCode : undefined
-      });
       throw new Error('Failed to update menu order');
     } finally {
       setMenuManagerLoading(false);

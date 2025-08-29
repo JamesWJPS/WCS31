@@ -8,6 +8,17 @@ export interface FileStorageConfig {
   maxFileSize: number; // in bytes
   allowedMimeTypes: string[];
   allowedExtensions: string[];
+  thumbnailDir?: string;
+  tempDir?: string;
+}
+
+export interface DocumentStorageStructure {
+  documents: string;
+  thumbnails: string;
+  temp: string;
+  folders: {
+    [folderId: string]: string;
+  };
 }
 
 export interface StoredFile {
@@ -21,18 +32,78 @@ export interface StoredFile {
 
 export class FileStorage {
   private config: FileStorageConfig;
+  private storageStructure: DocumentStorageStructure;
 
   constructor(config: FileStorageConfig) {
     this.config = config;
-    this.ensureUploadDirectory();
+    this.storageStructure = this.initializeStorageStructure();
+    this.ensureDirectoryStructure();
   }
 
   /**
-   * Ensure the upload directory exists
+   * Initialize the document storage directory structure
    */
-  private ensureUploadDirectory(): void {
-    if (!fs.existsSync(this.config.uploadDir)) {
-      fs.mkdirSync(this.config.uploadDir, { recursive: true });
+  private initializeStorageStructure(): DocumentStorageStructure {
+    const baseDir = this.config.uploadDir;
+    return {
+      documents: path.join(baseDir, 'documents'),
+      thumbnails: path.join(baseDir, 'thumbnails'),
+      temp: path.join(baseDir, 'temp'),
+      folders: {}
+    };
+  }
+
+  /**
+   * Ensure all required directories exist
+   */
+  private ensureDirectoryStructure(): void {
+    const directories = [
+      this.config.uploadDir,
+      this.storageStructure.documents,
+      this.storageStructure.thumbnails,
+      this.storageStructure.temp
+    ];
+
+    directories.forEach(dir => {
+      if (!fs.existsSync(dir)) {
+        fs.mkdirSync(dir, { recursive: true });
+      }
+    });
+  }
+
+  /**
+   * Create folder-specific directory structure
+   */
+  createFolderDirectory(folderId: string): string {
+    const folderPath = path.join(this.storageStructure.documents, folderId);
+    
+    if (!fs.existsSync(folderPath)) {
+      fs.mkdirSync(folderPath, { recursive: true });
+    }
+    
+    this.storageStructure.folders[folderId] = folderPath;
+    return folderPath;
+  }
+
+  /**
+   * Get folder directory path
+   */
+  getFolderDirectory(folderId: string): string {
+    if (!this.storageStructure.folders[folderId]) {
+      return this.createFolderDirectory(folderId);
+    }
+    return this.storageStructure.folders[folderId];
+  }
+
+  /**
+   * Remove folder directory and all its contents
+   */
+  removeFolderDirectory(folderId: string): void {
+    const folderPath = this.storageStructure.folders[folderId];
+    
+    if (folderPath && fs.existsSync(folderPath)) {
+      fs.rmSync(folderPath, { recursive: true, force: true });
+      delete this.storageStructure.folders[folderId];
     }
   }
 
@@ -86,9 +157,9 @@ export class FileStorage {
   }
 
   /**
-   * Store uploaded file securely
+   * Store uploaded file securely in folder-specific directory
    */
-  async storeFile(file: Express.Multer.File): Promise<StoredFile> {
+  async storeFile(file: Express.Multer.File, folderId?: string): Promise<StoredFile> {
     // Validate file
     const validation = this.validateFile(file);
     if (!validation.isValid) {
@@ -97,9 +168,18 @@ export class FileStorage {
 
     // Generate secure filename
     const secureFilename = this.generateSecureFilename(file.originalname);
-    const filePath = path.join(this.config.uploadDir, secureFilename);
+    
+    // Determine storage location
+    let storageDir: string;
+    if (folderId) {
+      storageDir = this.getFolderDirectory(folderId);
+    } else {
+      storageDir = this.storageStructure.documents;
+    }
+    
+    const filePath = path.join(storageDir, secureFilename);
 
-    // Move file to secure location
+    // Store file
     fs.writeFileSync(filePath, file.buffer);
 
     // Calculate file hash
@@ -116,10 +196,76 @@ export class FileStorage {
   }
 
   /**
-   * Delete a stored file
+   * Store file in temporary directory for processing
    */
-  async deleteFile(filename: string): Promise<void> {
-    const filePath = path.join(this.config.uploadDir, filename);
+  async storeTempFile(file: Express.Multer.File): Promise<StoredFile> {
+    const validation = this.validateFile(file);
+    if (!validation.isValid) {
+      throw new Error(validation.error);
+    }
+
+    const secureFilename = this.generateSecureFilename(file.originalname);
+    const filePath = path.join(this.storageStructure.temp, secureFilename);
+
+    fs.writeFileSync(filePath, file.buffer);
+    const hash = this.calculateFileHash(filePath);
+
+    return {
+      filename: secureFilename,
+      originalName: file.originalname,
+      path: filePath,
+      size: file.size,
+      mimeType: file.mimetype,
+      hash
+    };
+  }
+
+  /**
+   * Move file from temporary to permanent storage
+   */
+  async moveTempToPermanent(tempFilename: string, folderId?: string): Promise<string> {
+    const tempPath = path.join(this.storageStructure.temp, tempFilename);
+    
+    if (!fs.existsSync(tempPath)) {
+      throw new Error('Temporary file not found');
+    }
+
+    const storageDir = folderId ? this.getFolderDirectory(folderId) : this.storageStructure.documents;
+    const permanentPath = path.join(storageDir, tempFilename);
+
+    fs.renameSync(tempPath, permanentPath);
+    return permanentPath;
+  }
+
+  /**
+   * Delete a stored file from folder-specific directory
+   */
+  async deleteFile(filename: string, folderId?: string): Promise<void> {
+    let filePath: string;
+    
+    if (folderId) {
+      const folderDir = this.getFolderDirectory(folderId);
+      filePath = path.join(folderDir, filename);
+    } else {
+      filePath = path.join(this.storageStructure.documents, filename);
+    }
+    
+    if (fs.existsSync(filePath)) {
+      fs.unlinkSync(filePath);
+    }
+
+    // Also try to delete thumbnail if it exists
+    const thumbnailPath = path.join(this.storageStructure.thumbnails, filename);
+    if (fs.existsSync(thumbnailPath)) {
+      fs.unlinkSync(thumbnailPath);
+    }
+  }
+
+  /**
+   * Delete temporary file
+   */
+  async deleteTempFile(filename: string): Promise<void> {
+    const filePath = path.join(this.storageStructure.temp, filename);
     
     if (fs.existsSync(filePath)) {
       fs.unlinkSync(filePath);
@@ -127,25 +273,61 @@ export class FileStorage {
   }
 
   /**
-   * Check if file exists
+   * Clean up old temporary files
    */
-  fileExists(filename: string): boolean {
-    const filePath = path.join(this.config.uploadDir, filename);
+  async cleanupTempFiles(maxAgeHours: number = 24): Promise<void> {
+    const tempDir = this.storageStructure.temp;
+    const maxAge = maxAgeHours * 60 * 60 * 1000; // Convert to milliseconds
+    const now = Date.now();
+
+    if (!fs.existsSync(tempDir)) {
+      return;
+    }
+
+    const files = fs.readdirSync(tempDir);
+    
+    for (const file of files) {
+      const filePath = path.join(tempDir, file);
+      const stats = fs.statSync(filePath);
+      
+      if (now - stats.mtime.getTime() > maxAge) {
+        fs.unlinkSync(filePath);
+      }
+    }
+  }
+
+  /**
+   * Check if file exists in folder-specific directory
+   */
+  fileExists(filename: string, folderId?: string): boolean {
+    let filePath: string;
+    
+    if (folderId) {
+      const folderDir = this.getFolderDirectory(folderId);
+      filePath = path.join(folderDir, filename);
+    } else {
+      filePath = path.join(this.storageStructure.documents, filename);
+    }
+    
     return fs.existsSync(filePath);
   }
 
   /**
    * Get file path for serving
    */
-  getFilePath(filename: string): string {
-    return path.join(this.config.uploadDir, filename);
+  getFilePath(filename: string, folderId?: string): string {
+    if (folderId) {
+      const folderDir = this.getFolderDirectory(folderId);
+      return path.join(folderDir, filename);
+    }
+    return path.join(this.storageStructure.documents, filename);
   }
 
   /**
    * Get file stats
    */
-  getFileStats(filename: string): fs.Stats | null {
-    const filePath = path.join(this.config.uploadDir, filename);
+  getFileStats(filename: string, folderId?: string): fs.Stats | null {
+    const filePath = this.getFilePath(filename, folderId);
     
     if (!fs.existsSync(filePath)) {
       return null;
@@ -155,10 +337,52 @@ export class FileStorage {
   }
 
   /**
+   * Get storage structure information
+   */
+  getStorageInfo(): {
+    totalSize: number;
+    fileCount: number;
+    folderCount: number;
+    directories: DocumentStorageStructure;
+  } {
+    let totalSize = 0;
+    let fileCount = 0;
+    let folderCount = Object.keys(this.storageStructure.folders).length;
+
+    const calculateDirSize = (dirPath: string): void => {
+      if (!fs.existsSync(dirPath)) return;
+      
+      const files = fs.readdirSync(dirPath);
+      
+      for (const file of files) {
+        const filePath = path.join(dirPath, file);
+        const stats = fs.statSync(filePath);
+        
+        if (stats.isFile()) {
+          totalSize += stats.size;
+          fileCount++;
+        } else if (stats.isDirectory()) {
+          calculateDirSize(filePath);
+        }
+      }
+    };
+
+    calculateDirSize(this.storageStructure.documents);
+    calculateDirSize(this.storageStructure.thumbnails);
+
+    return {
+      totalSize,
+      fileCount,
+      folderCount,
+      directories: this.storageStructure
+    };
+  }
+
+  /**
    * Verify file integrity
    */
-  verifyFileIntegrity(filename: string, expectedHash: string): boolean {
-    const filePath = path.join(this.config.uploadDir, filename);
+  verifyFileIntegrity(filename: string, expectedHash: string, folderId?: string): boolean {
+    const filePath = this.getFilePath(filename, folderId);
     
     if (!fs.existsSync(filePath)) {
       return false;
@@ -166,6 +390,52 @@ export class FileStorage {
     
     const actualHash = this.calculateFileHash(filePath);
     return actualHash === expectedHash;
+  }
+
+  /**
+   * List files in a folder directory
+   */
+  listFolderFiles(folderId: string): Array<{
+    filename: string;
+    size: number;
+    mtime: Date;
+    isDirectory: boolean;
+  }> {
+    const folderDir = this.getFolderDirectory(folderId);
+    
+    if (!fs.existsSync(folderDir)) {
+      return [];
+    }
+
+    const files = fs.readdirSync(folderDir);
+    
+    return files.map(filename => {
+      const filePath = path.join(folderDir, filename);
+      const stats = fs.statSync(filePath);
+      
+      return {
+        filename,
+        size: stats.size,
+        mtime: stats.mtime,
+        isDirectory: stats.isDirectory()
+      };
+    });
+  }
+
+  /**
+   * Get available disk space
+   */
+  getAvailableSpace(): { free: number; total: number } {
+    try {
+      const stats = fs.statSync(this.config.uploadDir);
+      // This is a simplified version - in production you might want to use a library like 'statvfs'
+      return {
+        free: 1024 * 1024 * 1024, // 1GB placeholder
+        total: 10 * 1024 * 1024 * 1024 // 10GB placeholder
+      };
+    } catch (error) {
+      return { free: 0, total: 0 };
+    }
   }
 }
 

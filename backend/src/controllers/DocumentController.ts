@@ -159,18 +159,70 @@ export class DocumentController {
   };
 
   /**
-   * Get all documents accessible to user
+   * Get all documents accessible to user with filtering and sorting
    */
   getDocuments = async (req: Request, res: Response): Promise<void> => {
     try {
       const user = req.user!;
-      const documents = await this.documentService.getDocumentsForUser(user.userId, user.role);
+      
+      // Extract query parameters for filtering and sorting
+      const {
+        folderId,
+        mimeType,
+        startDate,
+        endDate,
+        minSize,
+        maxSize,
+        sortBy = 'createdAt',
+        sortOrder = 'desc',
+        page = '1',
+        limit = '50'
+      } = req.query;
+
+      const filters: {
+        folderId?: string;
+        mimeType?: string;
+        startDate?: Date;
+        endDate?: Date;
+        minSize?: number;
+        maxSize?: number;
+      } = {};
+
+      if (folderId) filters.folderId = folderId as string;
+      if (mimeType) filters.mimeType = mimeType as string;
+      if (startDate) filters.startDate = new Date(startDate as string);
+      if (endDate) filters.endDate = new Date(endDate as string);
+      if (minSize) filters.minSize = parseInt(minSize as string);
+      if (maxSize) filters.maxSize = parseInt(maxSize as string);
+
+      const sorting = {
+        sortBy: sortBy as 'name' | 'size' | 'createdAt' | 'mimeType',
+        sortOrder: sortOrder as 'asc' | 'desc'
+      };
+
+      const pagination = {
+        page: parseInt(page as string),
+        limit: parseInt(limit as string)
+      };
+
+      const result = await this.documentService.getDocumentsForUserWithFilters(
+        user.userId, 
+        user.role, 
+        filters, 
+        sorting, 
+        pagination
+      );
 
       res.json({
         success: true,
         data: {
-          documents,
-          count: documents.length
+          documents: result.documents,
+          count: result.documents.length,
+          totalCount: result.totalCount,
+          page: pagination.page,
+          totalPages: Math.ceil(result.totalCount / pagination.limit),
+          filters,
+          sorting
         }
       });
     } catch (error) {
@@ -567,12 +619,12 @@ export class DocumentController {
   };
 
   /**
-   * Search documents
+   * Search documents with advanced filtering and sorting
    */
   searchDocuments = async (req: Request, res: Response): Promise<void> => {
     try {
       const searchTerm = req.query['q'] as string;
-      const searchType = (req.query['type'] as 'name' | 'metadata' | 'tags') || 'name';
+      const searchType = (req.query['type'] as 'name' | 'metadata' | 'tags' | 'all') || 'all';
       const user = req.user!;
 
       if (!searchTerm) {
@@ -587,20 +639,62 @@ export class DocumentController {
         return;
       }
 
-      const documents = await this.documentService.searchDocuments(
+      // Extract additional filters and sorting
+      const {
+        folderId,
+        mimeType,
+        startDate,
+        endDate,
+        sortBy = 'createdAt',
+        sortOrder = 'desc',
+        page = '1',
+        limit = '50'
+      } = req.query;
+
+      const filters: {
+        folderId?: string;
+        mimeType?: string;
+        startDate?: Date;
+        endDate?: Date;
+      } = {};
+
+      if (folderId) filters.folderId = folderId as string;
+      if (mimeType) filters.mimeType = mimeType as string;
+      if (startDate) filters.startDate = new Date(startDate as string);
+      if (endDate) filters.endDate = new Date(endDate as string);
+
+      const sorting = {
+        sortBy: sortBy as 'name' | 'size' | 'createdAt' | 'mimeType',
+        sortOrder: sortOrder as 'asc' | 'desc'
+      };
+
+      const pagination = {
+        page: parseInt(page as string),
+        limit: parseInt(limit as string)
+      };
+
+      const result = await this.documentService.searchDocumentsAdvanced(
         searchTerm,
         user.userId,
         user.role,
-        searchType
+        searchType,
+        filters,
+        sorting,
+        pagination
       );
 
       res.json({
         success: true,
         data: {
-          documents,
-          count: documents.length,
+          documents: result.documents,
+          count: result.documents.length,
+          totalCount: result.totalCount,
+          page: pagination.page,
+          totalPages: Math.ceil(result.totalCount / pagination.limit),
           searchTerm,
-          searchType
+          searchType,
+          filters,
+          sorting
         }
       });
     } catch (error) {

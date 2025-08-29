@@ -50,6 +50,13 @@ router.post(
 );
 
 /**
+ * @route GET /api/documents/search
+ * @desc Search documents
+ * @access Private (returns only accessible documents)
+ */
+router.get('/search', documentController.searchDocuments);
+
+/**
  * @route GET /api/documents
  * @desc Get all documents accessible to user
  * @access Private
@@ -97,13 +104,6 @@ router.delete('/:id', documentController.deleteDocument);
  * @access Private (requires write permission to folders)
  */
 router.delete('/bulk', documentController.deleteBulkDocuments);
-
-/**
- * @route GET /api/documents/search
- * @desc Search documents
- * @access Private (returns only accessible documents)
- */
-router.get('/search', documentController.searchDocuments);
 
 /**
  * @route GET /api/documents/folder/:folderId

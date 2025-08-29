@@ -209,6 +209,52 @@ describe('Folder Routes Integration Tests', () => {
     });
   });
 
+  describe('GET /api/folders/:id/breadcrumbs', () => {
+    it('should get folder breadcrumbs for navigation', async () => {
+      const path = [
+        { ...mockFolder, id: 'root', name: 'Root', parentId: null },
+        { ...mockFolder, id: 'parent', name: 'Parent', parentId: 'root' },
+        { ...mockFolder, id: 'folder-123', name: 'Current', parentId: 'parent' }
+      ];
+      mockFolderService.getFolderPath.mockResolvedValue(path);
+
+      const response = await request(app)
+        .get('/api/folders/folder-123/breadcrumbs');
+
+      expect(response.status).toBe(200);
+      expect(response.body.success).toBe(true);
+      expect(response.body.data.breadcrumbs).toHaveLength(3);
+      expect(response.body.data.breadcrumbs[0]).toMatchObject({
+        id: 'root',
+        name: 'Root',
+        isRoot: true,
+        isLast: false,
+        level: 0
+      });
+      expect(response.body.data.breadcrumbs[2]).toMatchObject({
+        id: 'folder-123',
+        name: 'Current',
+        isRoot: false,
+        isLast: true,
+        level: 2
+      });
+      expect(response.body.data.currentFolder.id).toBe('folder-123');
+      expect(response.body.data.depth).toBe(3);
+      expect(mockFolderService.getFolderPath).toHaveBeenCalledWith('folder-123', 'user-123', 'editor');
+    });
+
+    it('should return 403 if user lacks permissions', async () => {
+      mockFolderService.getFolderPath.mockRejectedValue(new Error('Insufficient permissions to access this folder'));
+
+      const response = await request(app)
+        .get('/api/folders/folder-123/breadcrumbs');
+
+      expect(response.status).toBe(403);
+      expect(response.body.success).toBe(false);
+      expect(response.body.error.code).toBe('INSUFFICIENT_PERMISSIONS');
+    });
+  });
+
   describe('GET /api/folders/:id/path', () => {
     it('should get folder path', async () => {
       const path = [

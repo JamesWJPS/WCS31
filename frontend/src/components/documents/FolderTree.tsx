@@ -1,10 +1,19 @@
-import React, { useState, useCallback, useEffect } from 'react';
-import { Button } from '../ui/Button';
-import { LoadingSpinner } from '../ui/LoadingSpinner';
-import { ErrorMessage } from '../ui/ErrorMessage';
-import { folderService } from '../../services';
+import React, { useState, useEffect, useCallback } from 'react';
 import { FolderTreeNode, Folder } from '../../types';
+import { folderService } from '../../services';
+import { Button, LoadingSpinner, ErrorMessage } from '../ui';
+import Breadcrumb, { BreadcrumbItem } from '../ui/Breadcrumb';
+import { useFolderOperations } from './FolderOperations';
 import './FolderTree.css';
+
+// Utility function to format file sizes
+const formatFileSize = (bytes: number): string => {
+  if (bytes === 0) return '0 B';
+  const k = 1024;
+  const sizes = ['B', 'KB', 'MB', 'GB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+};
 
 interface FolderTreeProps {
   selectedFolderId?: string | null;
@@ -14,6 +23,7 @@ interface FolderTreeProps {
   onFolderDelete?: (folder: Folder) => void;
   showActions?: boolean;
   showCreateRoot?: boolean;
+  showBreadcrumbs?: boolean;
   className?: string;
 }
 
@@ -161,7 +171,7 @@ const FolderTreeNodeComponent: React.FC<FolderTreeNodeProps> = ({
               key={child.id}
               node={child}
               level={level + 1}
-              selectedFolderId={selectedFolderId}
+              selectedFolderId={selectedFolderId || null}
               onFolderSelect={onFolderSelect}
               onFolderCreate={onFolderCreate}
               onFolderEdit={onFolderEdit}
@@ -185,12 +195,42 @@ const FolderTree: React.FC<FolderTreeProps> = ({
   onFolderDelete,
   showActions = true,
   showCreateRoot = true,
+  showBreadcrumbs = true,
   className = '',
 }) => {
   const [folderTree, setFolderTree] = useState<FolderTreeNode[]>([]);
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
+  const [breadcrumbPath, setBreadcrumbPath] = useState<BreadcrumbItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Folder operations integration
+  const {
+    openCreateModal,
+    openEditModal,
+    openDeleteModal,
+    modals
+  } = useFolderOperations({
+    onFolderCreated: (folder) => {
+      loadFolderTree();
+      onFolderCreate?.(folder.parentId);
+    },
+    onFolderUpdated: (folder) => {
+      loadFolderTree();
+      onFolderEdit?.(folder);
+    },
+    onFolderDeleted: (folderId) => {
+      loadFolderTree();
+      // If the deleted folder was selected, clear selection
+      if (selectedFolderId === folderId) {
+        onFolderSelect?.(null);
+      }
+      onFolderDelete?.(folderTree.find(f => f.id === folderId) as Folder);
+    },
+    onError: (error) => {
+      setError(error);
+    }
+  });
 
   const loadFolderTree = useCallback(async () => {
     try {
@@ -206,9 +246,35 @@ const FolderTree: React.FC<FolderTreeProps> = ({
     }
   }, []);
 
+  const loadBreadcrumbPath = useCallback(async (folderId: string | null) => {
+    if (!folderId) {
+      setBreadcrumbPath([]);
+      return;
+    }
+
+    try {
+      const path = await folderService.getFolderPath(folderId);
+      const breadcrumbs: BreadcrumbItem[] = path.map(folder => ({
+        id: folder.id,
+        name: folder.name,
+        path: folder.id
+      }));
+      setBreadcrumbPath(breadcrumbs);
+    } catch (err) {
+      console.error('Failed to load folder path:', err);
+      setBreadcrumbPath([]);
+    }
+  }, []);
+
   useEffect(() => {
     loadFolderTree();
   }, [loadFolderTree]);
+
+  useEffect(() => {
+    if (showBreadcrumbs) {
+      loadBreadcrumbPath(selectedFolderId || null);
+    }
+  }, [selectedFolderId, showBreadcrumbs, loadBreadcrumbPath]);
 
   const handleToggleExpanded = useCallback((folderId: string) => {
     setExpandedFolders(prev => {
@@ -242,20 +308,45 @@ const FolderTree: React.FC<FolderTreeProps> = ({
   }, []);
 
   const handleCreateRootFolder = useCallback(() => {
-    onFolderCreate?.(null);
-  }, [onFolderCreate]);
+    openCreateModal(null);
+  }, [openCreateModal]);
+
+  const handleFolderCreate = useCallback((parentId: string | null) => {
+    openCreateModal(parentId);
+  }, [openCreateModal]);
+
+  const handleFolderEdit = useCallback((folder: Folder) => {
+    openEditModal(folder);
+  }, [openEditModal]);
+
+  const handleFolderDelete = useCallback((folder: Folder) => {
+    openDeleteModal(folder);
+  }, [openDeleteModal]);
 
   const handleClearSelection = useCallback(() => {
     onFolderSelect?.(null);
   }, [onFolderSelect]);
 
-  const formatFileSize = (bytes: number): string => {
-    if (bytes === 0) return '0 B';
-    const k = 1024;
-    const sizes = ['B', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
-  };
+  const handleBreadcrumbClick = useCallback((item: BreadcrumbItem) => {
+    // Find the folder in the tree to get the full folder object
+    const findFolderById = (nodes: FolderTreeNode[], id: string): Folder | null => {
+      for (const node of nodes) {
+        if (node.id === id) {
+          return node;
+        }
+        const found = findFolderById(node.children, id);
+        if (found) return found;
+      }
+      return null;
+    };
+
+    const folder = findFolderById(folderTree, item.id);
+    if (folder) {
+      onFolderSelect?.(folder);
+    }
+  }, [folderTree, onFolderSelect]);
+
+
 
   if (isLoading) {
     return (
@@ -267,6 +358,18 @@ const FolderTree: React.FC<FolderTreeProps> = ({
       </div>
     );
   }
+
+  // Auto-expand path to selected folder
+  useEffect(() => {
+    if (selectedFolderId && breadcrumbPath.length > 0) {
+      const pathIds = breadcrumbPath.map(item => item.id);
+      setExpandedFolders(prev => {
+        const newSet = new Set(prev);
+        pathIds.forEach(id => newSet.add(id));
+        return newSet;
+      });
+    }
+  }, [selectedFolderId, breadcrumbPath]);
 
   if (error) {
     return (
@@ -283,44 +386,56 @@ const FolderTree: React.FC<FolderTreeProps> = ({
   }
 
   return (
-    <div className={`folder-tree ${className}`}>
-      <div className="folder-tree__header">
-        <h3 className="folder-tree__title">Folders</h3>
-        <div className="folder-tree__actions">
-          {folderTree.length > 0 && (
-            <>
+    <>
+      <div className={`folder-tree ${className}`}>
+        <div className="folder-tree__header">
+          <h3 className="folder-tree__title">Folders</h3>
+          <div className="folder-tree__actions">
+            {folderTree.length > 0 && (
+              <>
+                <Button
+                  variant="ghost"
+                  size="small"
+                  onClick={handleExpandAll}
+                  title="Expand all folders"
+                >
+                  Expand All
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="small"
+                  onClick={handleCollapseAll}
+                  title="Collapse all folders"
+                >
+                  Collapse All
+                </Button>
+              </>
+            )}
+            {showCreateRoot && (
               <Button
                 variant="ghost"
                 size="small"
-                onClick={handleExpandAll}
-                title="Expand all folders"
+                onClick={handleCreateRootFolder}
+                title="Create new root folder"
               >
-                Expand All
+                ➕ New Folder
               </Button>
-              <Button
-                variant="ghost"
-                size="small"
-                onClick={handleCollapseAll}
-                title="Collapse all folders"
-              >
-                Collapse All
-              </Button>
-            </>
-          )}
-          {showCreateRoot && (
-            <Button
-              variant="ghost"
-              size="small"
-              onClick={handleCreateRootFolder}
-              title="Create new root folder"
-            >
-              ➕ New Folder
-            </Button>
-          )}
+            )}
+          </div>
         </div>
-      </div>
 
       <div className="folder-tree__content">
+        {showBreadcrumbs && breadcrumbPath.length > 0 && (
+          <div className="folder-tree__breadcrumbs">
+            <Breadcrumb
+              items={breadcrumbPath}
+              onItemClick={handleBreadcrumbClick}
+              showRoot={true}
+              rootLabel="All Folders"
+            />
+          </div>
+        )}
+
         {selectedFolderId && (
           <div className="folder-tree__selection">
             <Button
@@ -350,11 +465,11 @@ const FolderTree: React.FC<FolderTreeProps> = ({
                 key={node.id}
                 node={node}
                 level={0}
-                selectedFolderId={selectedFolderId}
+                selectedFolderId={selectedFolderId || null}
                 onFolderSelect={onFolderSelect}
-                onFolderCreate={onFolderCreate}
-                onFolderEdit={onFolderEdit}
-                onFolderDelete={onFolderDelete}
+                onFolderCreate={handleFolderCreate}
+                onFolderEdit={handleFolderEdit}
+                onFolderDelete={handleFolderDelete}
                 showActions={showActions}
                 expandedFolders={expandedFolders}
                 onToggleExpanded={handleToggleExpanded}
@@ -363,7 +478,11 @@ const FolderTree: React.FC<FolderTreeProps> = ({
           </div>
         )}
       </div>
-    </div>
+      </div>
+      
+      {/* Folder operation modals */}
+      {modals}
+    </>
   );
 };
 

@@ -236,6 +236,60 @@ export class FolderController {
   };
 
   /**
+   * Get folder breadcrumbs for navigation
+   */
+  getFolderBreadcrumbs = async (req: Request, res: Response): Promise<void> => {
+    try {
+      const folderId = req.params['id']!;
+      const user = req.user!;
+
+      const path = await this.folderService.getFolderPath(folderId, user.userId, user.role);
+
+      // Transform path into breadcrumb format with navigation info
+      const breadcrumbs = path.map((folder, index) => ({
+        id: folder.id,
+        name: folder.name,
+        isRoot: index === 0 && !folder.parentId,
+        isLast: index === path.length - 1,
+        level: index,
+        url: `/folders/${folder.id}`
+      }));
+
+      res.json({
+        success: true,
+        data: {
+          breadcrumbs,
+          currentFolder: breadcrumbs[breadcrumbs.length - 1],
+          depth: breadcrumbs.length
+        }
+      });
+    } catch (error) {
+      console.error('Get folder breadcrumbs error:', error);
+      
+      if (error instanceof Error && error.message.includes('Insufficient permissions')) {
+        res.status(403).json({
+          success: false,
+          error: {
+            code: 'INSUFFICIENT_PERMISSIONS',
+            message: 'You do not have permission to access this folder',
+            timestamp: new Date().toISOString()
+          }
+        });
+        return;
+      }
+
+      res.status(500).json({
+        success: false,
+        error: {
+          code: 'FETCH_FAILED',
+          message: error instanceof Error ? error.message : 'Failed to fetch folder breadcrumbs',
+          timestamp: new Date().toISOString()
+        }
+      });
+    }
+  };
+
+  /**
    * Get folder statistics
    */
   getFolderStatistics = async (req: Request, res: Response): Promise<void> => {

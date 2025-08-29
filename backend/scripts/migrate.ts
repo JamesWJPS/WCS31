@@ -1,28 +1,23 @@
-import { knex } from '../src/utils/database';
-import config from '../src/config/environment';
+import { db } from '../src/utils/database';
 
 async function runMigrations() {
   try {
     console.log('Starting database migrations...');
     
     // Run migrations
-    await knex.migrate.latest({
-      directory: './src/migrations',
-      extension: 'ts'
-    });
+    await db.migrate.latest();
     
     console.log('Database migrations completed successfully');
     
     // Check migration status
-    const [batchNo, migrations] = await knex.migrate.currentVersion();
-    console.log(`Current migration batch: ${batchNo}`);
-    console.log(`Applied migrations: ${migrations.length}`);
+    const currentVersion = await db.migrate.currentVersion();
+    console.log(`Current migration version: ${currentVersion}`);
     
   } catch (error) {
     console.error('Migration failed:', error);
     process.exit(1);
   } finally {
-    await knex.destroy();
+    await db.destroy();
   }
 }
 

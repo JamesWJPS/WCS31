@@ -54,6 +54,39 @@ export class DocumentService {
   }
 
   /**
+   * Get documents accessible to a user with filtering, sorting, and pagination
+   */
+  async getDocumentsForUserWithFilters(
+    userId: string, 
+    userRole: string,
+    filters: {
+      folderId?: string;
+      mimeType?: string;
+      startDate?: Date;
+      endDate?: Date;
+      minSize?: number;
+      maxSize?: number;
+    },
+    sorting: {
+      sortBy: 'name' | 'size' | 'createdAt' | 'mimeType';
+      sortOrder: 'asc' | 'desc';
+    },
+    pagination: {
+      page: number;
+      limit: number;
+    }
+  ): Promise<{ documents: Document[]; totalCount: number }> {
+    return this.documentRepository.getDocumentsForUserWithFilters(
+      userId, 
+      userRole, 
+      this.folderRepository,
+      filters,
+      sorting,
+      pagination
+    );
+  }
+
+  /**
    * Get documents in a specific folder with permission check
    */
   async getDocumentsInFolder(folderId: string, userId: string, userRole: string): Promise<Document[]> {
@@ -151,6 +184,41 @@ export class DocumentService {
     }
 
     return filteredResults;
+  }
+
+  /**
+   * Advanced search with filtering, sorting, and pagination
+   */
+  async searchDocumentsAdvanced(
+    searchTerm: string,
+    userId: string,
+    userRole: string,
+    searchType: 'name' | 'metadata' | 'tags' | 'all',
+    filters: {
+      folderId?: string;
+      mimeType?: string;
+      startDate?: Date;
+      endDate?: Date;
+    },
+    sorting: {
+      sortBy: 'name' | 'size' | 'createdAt' | 'mimeType';
+      sortOrder: 'asc' | 'desc';
+    },
+    pagination: {
+      page: number;
+      limit: number;
+    }
+  ): Promise<{ documents: Document[]; totalCount: number }> {
+    return this.documentRepository.searchDocumentsAdvanced(
+      searchTerm,
+      userId,
+      userRole,
+      this.folderRepository,
+      searchType,
+      filters,
+      sorting,
+      pagination
+    );
   }
 
   /**
